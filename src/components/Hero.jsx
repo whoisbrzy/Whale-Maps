@@ -32,13 +32,13 @@ export default function Hero() {
 
         <div className="hero__cta">
           <a className="btn btn--primary" href="#map">
-            Open the map <ArrowRight />
+            Get Started <ArrowRight />
           </a>
           <a className="btn btn--ghost" href="#login">
-            <Discord /> Login with Discord
+            <Discord /> Connect with Discord
           </a>
           <a className="btn btn--ghost" href="#faq">
-            Read the FAQ
+            Read the Docs
           </a>
         </div>
       </div>
