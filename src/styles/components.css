@@ -1,0 +1,234 @@
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: 50px;
+  padding: 0 1.65rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease),
+    transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+.btn--primary {
+  background: var(--blue-500);
+  color: #fff;
+  box-shadow: 0 8px 28px -8px var(--blue-glow);
+}
+.btn--primary:hover {
+  background: var(--blue-400);
+}
+.btn--primary:active {
+  background: var(--blue-600);
+}
+
+.btn--ghost {
+  background: rgba(8, 10, 14, 0.72);
+  border-color: var(--border-strong);
+  color: var(--text);
+  backdrop-filter: blur(8px);
+}
+.btn--ghost:hover {
+  background: rgba(24, 28, 38, 0.85);
+  border-color: rgba(255, 255, 255, 0.34);
+}
+
+.btn--small {
+  height: 34px;
+  padding: 0 0.9rem;
+  font-size: var(--fs-small);
+  border-radius: var(--radius-pill);
+}
+
+.btn--icon {
+  width: 38px;
+  height: 34px;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--border);
+}
+.btn--icon:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ==========================================================================
+   Navbar
+   ========================================================================== */
+.nav {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 50;
+  height: var(--nav-h);
+  background: var(--black);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+.nav__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+}
+.nav__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+.nav__brand svg {
+  width: 26px;
+  height: 26px;
+  color: var(--blue-400);
+}
+.nav__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.nav__login {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  height: 34px;
+  padding: 0 0.85rem 0 0.35rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: var(--fs-small);
+  font-weight: 500;
+  transition: background var(--dur) var(--ease);
+}
+.nav__login:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+.nav__login-badge {
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: var(--blue-500);
+}
+.nav__login-badge svg {
+  width: 15px;
+  height: 15px;
+  color: #fff;
+}
+
+/* ==========================================================================
+   Hero
+   ========================================================================== */
+.hero {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 100svh;
+  padding: calc(var(--nav-h) + var(--space-7)) 0 var(--space-8);
+  overflow: hidden;
+  isolation: isolate;
+  text-align: center;
+}
+
+/* Background: drop a screenshot at /public/hero.jpg and it fades in under
+   the same dark overlay. Until then the gradient below stands in. */
+.hero__bg {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(60% 55% at 50% 38%, rgba(47, 107, 255, 0.28), transparent 70%),
+    radial-gradient(45% 40% at 85% 70%, rgba(34, 211, 238, 0.12), transparent 70%),
+    linear-gradient(180deg, #07101f 0%, #060a12 55%, #000 100%);
+  background-size: cover;
+  background-position: center;
+}
+.hero__bg--image {
+  background-image: var(--hero-image);
+}
+.hero__shade {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.25) 35%, rgba(0, 0, 0, 0.7) 78%, #000 100%);
+}
+
+.hero__title {
+  font-size: var(--fs-display);
+  font-weight: 700;
+  line-height: 0.98;
+  letter-spacing: -0.055em;
+  text-wrap: balance;
+}
+.hero__title-line {
+  display: block;
+}
+.hero__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.12em;
+  vertical-align: baseline;
+}
+.hero__brand svg {
+  width: 0.78em;
+  height: 0.78em;
+  color: var(--blue-400);
+  filter: drop-shadow(0 0 28px var(--blue-glow));
+}
+.hero__lead {
+  max-width: 38rem;
+  margin: var(--space-5) auto 0;
+  font-size: var(--fs-lead);
+  line-height: 1.4;
+  color: var(--text-soft);
+  text-wrap: balance;
+}
+.hero__cta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+.hero__scroll {
+  position: absolute;
+  bottom: 2.25rem;
+  left: 50%;
+  translate: -50% 0;
+  color: var(--text-muted);
+  opacity: 0.8;
+}
+.hero__scroll svg {
+  width: 18px;
+  height: 18px;
+}
+
+@media (max-width: 560px) {
+  .hero__cta .btn {
+    width: 100%;
+  }
+  .nav__login-text {
+    display: none;
+  }
+  .nav__login {
+    padding: 0.35rem;
+  }
+}
