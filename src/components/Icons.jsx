@@ -1,10 +1,7 @@
-export function WhaleMark(props) {
-  return (
-    <svg viewBox="0 0 32 32" fill="currentColor" aria-hidden="true" {...props}>
-      {/* Whale tail: two flukes rising from a stock */}
-      <path d="M16 29c-.9 0-1.6-.7-1.6-1.6v-6.2c-2.9-.2-5.5-1.5-7.5-3.6C4.6 15.2 3.2 11.7 3 8c-.1-1.4 1.5-2.1 2.5-1.1 1.7 1.7 4 2.6 6.4 2.6 1.9 0 3.5-.7 4.1-2 .6 1.3 2.2 2 4.1 2 2.4 0 4.7-.9 6.4-2.6 1-1 2.6-.3 2.5 1.1-.2 3.7-1.6 7.2-3.9 9.6-2 2.1-4.6 3.4-7.5 3.6v6.2c0 .9-.7 1.6-1.6 1.6z" />
-    </svg>
-  );
+/* The Whale Maps logo (public/logo.png) is a white silhouette on a transparent
+   background. Rendering it as a CSS mask lets it take any text color. */
+export function WhaleMark({ className = "", ...rest }) {
+  return <span className={`whale-mark ${className}`} role="img" aria-hidden="true" {...rest} />;
 }
 
 export function ArrowRight(props) {

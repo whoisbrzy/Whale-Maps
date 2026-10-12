@@ -1,8 +1,8 @@
 import { WhaleMark, ArrowRight, ArrowUp, Discord } from "./Icons.jsx";
 
-/* To use a real screenshot, put it at public/hero.jpg and set
-   HERO_IMAGE = "/hero.jpg". The dark overlay keeps the text readable. */
-const HERO_IMAGE = null;
+/* Background screenshot lives at public/hero.jpg. Swap the file to change it;
+   the dark overlay keeps the text readable. Set to null for the gradient. */
+const HERO_IMAGE = "/hero.jpg";
 
 export default function Hero() {
   return (
