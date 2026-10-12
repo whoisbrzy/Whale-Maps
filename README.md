@@ -1,1 +1,3 @@
-# Whale-Maps
+# Whale Maps
+
+High-Quality ER:LC tool
