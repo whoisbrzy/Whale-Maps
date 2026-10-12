@@ -1,24 +1,69 @@
+import { useEffect, useRef, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { WhaleMark, Discord, Menu } from "./Icons.jsx";
 
+const MENU = [
+  { to: "/#faq", label: "FAQ" },
+  { to: "/terms", label: "Terms of Service" },
+  { to: "/privacy", label: "Privacy Policy" },
+];
+
 export default function Navbar() {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef(null);
+  const location = useLocation();
+
+  // Close on navigation, outside click and Escape.
+  useEffect(() => setOpen(false), [location.pathname, location.hash]);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
+    };
+    const onKey = (e) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
   return (
     <header className="nav">
       <div className="container nav__inner">
-        <a className="nav__brand" href="/" aria-label="Whale Maps home">
+        <Link className="nav__brand" to="/" aria-label="Whale Maps home">
           <WhaleMark />
           Whale Maps
-        </a>
+        </Link>
 
-        <div className="nav__actions">
+        <div className="nav__actions" ref={wrapRef}>
           <a className="nav__login" href="#login">
             <span className="nav__login-badge">
               <Discord />
             </span>
             <span className="nav__login-text">Login with Discord</span>
           </a>
-          <button className="btn btn--icon" type="button" aria-label="Open menu">
+          <button
+            className="btn btn--icon"
+            type="button"
+            aria-label="Menu"
+            aria-expanded={open}
+            aria-controls="nav-menu"
+            onClick={() => setOpen((v) => !v)}
+          >
             <Menu width="18" height="18" />
           </button>
+
+          {open && (
+            <nav id="nav-menu" className="nav__menu" aria-label="Site">
+              {MENU.map((item) => (
+                <Link key={item.to} to={item.to} className="nav__menu-link">
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+          )}
         </div>
       </div>
     </header>

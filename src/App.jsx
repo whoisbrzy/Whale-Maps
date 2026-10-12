@@ -1,13 +1,20 @@
-import Navbar from "./components/Navbar.jsx";
-import Hero from "./components/Hero.jsx";
+import { Routes, Route } from "react-router-dom";
+import Layout from "./components/Layout.jsx";
+import Home from "./pages/Home.jsx";
+import Terms from "./pages/Terms.jsx";
+import Privacy from "./pages/Privacy.jsx";
+import NotFound from "./pages/NotFound.jsx";
 
+/* BrowserRouter is provided in main.jsx. */
 export default function App() {
   return (
-    <>
-      <Navbar />
-      <main>
-        <Hero />
-      </main>
-    </>
+    <Routes>
+      <Route element={<Layout />}>
+        <Route path="/" element={<Home />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="*" element={<NotFound />} />
+      </Route>
+    </Routes>
   );
 }

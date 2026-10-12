@@ -37,13 +37,13 @@ export default function Hero() {
           <a className="btn btn--ghost" href="#login">
             <Discord /> Login with Discord
           </a>
-          <a className="btn btn--ghost" href="#docs">
-            Read the docs
+          <a className="btn btn--ghost" href="#faq">
+            Read the FAQ
           </a>
         </div>
       </div>
 
-      <a className="hero__scroll" href="#features" aria-label="Scroll to features">
+      <a className="hero__scroll" href="#faq" aria-label="Scroll to FAQ">
         <ArrowUp />
       </a>
     </section>
