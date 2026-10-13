@@ -18,7 +18,8 @@ export default function Footer() {
           <nav className="footer__col" aria-label="Product">
             <h3>Product</h3>
             <a href="#map">Open the map</a>
-            <a href="#login">Login with Discord</a>
+            <a href="/auth/login">Login with Discord</a>
+            <Link to="/#features">Features</Link>
             <Link to="/#faq">FAQ</Link>
           </nav>
 

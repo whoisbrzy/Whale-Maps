@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { WhaleMark, Discord, Menu } from "./Icons.jsx";
+import { useAuth } from "../auth.jsx";
 
 const MENU = [
+  { to: "/#features", label: "Features" },
   { to: "/#faq", label: "FAQ" },
   { to: "/terms", label: "Terms of Service" },
   { to: "/privacy", label: "Privacy Policy" },
@@ -12,6 +14,7 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
   const location = useLocation();
+  const { user, logout } = useAuth();
 
   // Close on navigation, outside click and Escape.
   useEffect(() => setOpen(false), [location.pathname, location.hash]);
@@ -38,12 +41,26 @@ export default function Navbar() {
         </Link>
 
         <div className="nav__actions" ref={wrapRef}>
-          <a className="nav__login" href="#login">
-            <span className="nav__login-badge">
-              <Discord />
-            </span>
-            <span className="nav__login-text">Login with Discord</span>
-          </a>
+          {user ? (
+            <div className="nav__login" title={user.name}>
+              <img
+                className="nav__avatar"
+                src={user.avatar}
+                alt=""
+                width="25"
+                height="25"
+                referrerPolicy="no-referrer"
+              />
+              <span className="nav__login-text">{user.name}</span>
+            </div>
+          ) : (
+            <a className="nav__login" href="/auth/login">
+              <span className="nav__login-badge">
+                <Discord />
+              </span>
+              <span className="nav__login-text">Login with Discord</span>
+            </a>
+          )}
           <button
             className="btn btn--icon"
             type="button"
@@ -62,6 +79,11 @@ export default function Navbar() {
                   {item.label}
                 </Link>
               ))}
+              {user && (
+                <button type="button" className="nav__menu-link nav__menu-link--button" onClick={logout}>
+                  Log out
+                </button>
+              )}
             </nav>
           )}
         </div>

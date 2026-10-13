@@ -1,10 +1,12 @@
 import { WhaleMark, ArrowRight, ArrowUp, Discord } from "./Icons.jsx";
+import { useAuth } from "../auth.jsx";
 
 /* Background screenshot lives at public/hero.jpg. Swap the file to change it;
    the dark overlay keeps the text readable. Set to null for the gradient. */
 const HERO_IMAGE = "/hero.jpg";
 
 export default function Hero() {
+  const { user } = useAuth();
   return (
     <section className="hero">
       <div
@@ -34,16 +36,18 @@ export default function Hero() {
           <a className="btn btn--primary" href="#map">
             Get Started <ArrowRight />
           </a>
-          <a className="btn btn--ghost" href="#login">
-            <Discord /> Connect with Discord
-          </a>
+          {!user && (
+            <a className="btn btn--ghost" href="/auth/login">
+              <Discord /> Connect with Discord
+            </a>
+          )}
           <a className="btn btn--ghost" href="#faq">
             Read the Docs
           </a>
         </div>
       </div>
 
-      <a className="hero__scroll" href="#faq" aria-label="Scroll to FAQ">
+      <a className="hero__scroll" href="#features" aria-label="Scroll to features">
         <ArrowUp />
       </a>
     </section>
