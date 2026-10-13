@@ -366,3 +366,62 @@
   text-align: left;
   cursor: pointer;
 }
+
+/* ==========================================================================
+   Verify page
+   ========================================================================== */
+.panel__user {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: var(--space-5);
+  font-size: var(--fs-small);
+  color: var(--text-soft);
+}
+.panel {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+  padding: var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, var(--surface-1), var(--surface-0));
+}
+.panel__text,
+.panel__muted {
+  color: var(--text-soft);
+}
+.panel__muted {
+  color: var(--text-muted);
+}
+.panel__steps {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: var(--space-2);
+  color: var(--text-soft);
+}
+.panel__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.panel__who {
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.panel__id {
+  font-size: var(--fs-small);
+  font-weight: 400;
+  color: var(--text-muted);
+}
+.panel__error {
+  color: var(--status-danger);
+}
+.btn[disabled] {
+  opacity: 0.6;
+  cursor: default;
+}

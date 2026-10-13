@@ -35,8 +35,8 @@ const FEATURES = [
   },
   {
     Icon: Discord,
-    title: "Discord login",
-    text: "Sign in with one click. We only ask for your basic profile, never your messages or your servers.",
+    title: "Discord login + Roblox link",
+    text: "Sign in with Discord, then verify your Roblox account through Dock. We only ask for your basic Discord profile, never your messages or servers.",
     status: "live",
   },
 ];

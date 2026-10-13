@@ -1,22 +1,36 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
-/* Who is logged in? Asks the server once (GET /api/me) and shares the answer.
-   On a host without server.js the request fails and the user simply stays logged out. */
-const AuthContext = createContext({ user: null, ready: false, logout: async () => {} });
+/* Who is logged in? Asks the server (GET /api/me) and shares the answer.
+   user = { id, name, avatar, roblox: { id, name } | null }. On a host without the API the
+   request fails and the user simply stays logged out. */
+const AuthContext = createContext({
+  user: null,
+  ready: false,
+  robloxEnabled: false,
+  refresh: async () => {},
+  logout: async () => {},
+});
 
 export function AuthProvider({ children }) {
-  const [state, setState] = useState({ user: null, ready: false });
+  const [state, setState] = useState({ user: null, ready: false, robloxEnabled: false });
+
+  const load = useCallback(async (signal) => {
+    try {
+      const r = await fetch("/api/me", { credentials: "same-origin", signal });
+      const d = r.ok ? await r.json() : {};
+      setState({ user: d.user ?? null, ready: true, robloxEnabled: Boolean(d.robloxEnabled) });
+    } catch {
+      if (!signal?.aborted) setState((s) => ({ ...s, user: null, ready: true }));
+    }
+  }, []);
 
   useEffect(() => {
     const ctrl = new AbortController();
-    fetch("/api/me", { credentials: "same-origin", signal: ctrl.signal })
-      .then((r) => (r.ok ? r.json() : { user: null }))
-      .then((d) => setState({ user: d.user ?? null, ready: true }))
-      .catch(() => {
-        if (!ctrl.signal.aborted) setState({ user: null, ready: true });
-      });
+    load(ctrl.signal);
     return () => ctrl.abort();
-  }, []);
+  }, [load]);
+
+  const refresh = useCallback(() => load(), [load]);
 
   const logout = useCallback(async () => {
     try {
@@ -24,10 +38,10 @@ export function AuthProvider({ children }) {
     } catch {
       /* ignore: we clear local state either way */
     }
-    setState({ user: null, ready: true });
+    setState((s) => ({ ...s, user: null, ready: true }));
   }, []);
 
-  const value = useMemo(() => ({ ...state, logout }), [state, logout]);
+  const value = useMemo(() => ({ ...state, refresh, logout }), [state, refresh, logout]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

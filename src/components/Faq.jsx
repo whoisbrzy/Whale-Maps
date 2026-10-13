@@ -51,6 +51,17 @@ const ITEMS = [
     ),
   },
   {
+    q: "Why verify my Roblox account?",
+    a: (
+      <p>
+        Verifying links your Roblox account to your Discord login, so other players can trust who is
+        on the map. It's done through Dock: you sign in there with Discord and Roblox once, and we
+        store the link so you don't have to repeat it. You can remove it any time on the{" "}
+        <Link to="/verify">Verify page</Link>.
+      </p>
+    ),
+  },
+  {
     q: "Do I need to install anything?",
     a: (
       <p>

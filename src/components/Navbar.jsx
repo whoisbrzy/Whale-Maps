@@ -6,6 +6,7 @@ import { useAuth } from "../auth.jsx";
 const MENU = [
   { to: "/#features", label: "Features" },
   { to: "/#faq", label: "FAQ" },
+  { to: "/verify", label: "Verify Roblox" },
   { to: "/terms", label: "Terms of Service" },
   { to: "/privacy", label: "Privacy Policy" },
 ];

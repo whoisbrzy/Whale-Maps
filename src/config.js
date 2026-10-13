@@ -6,5 +6,5 @@ export const SITE = {
   // While empty, those links are hidden.
   contactEmail: "",
   // Shown at the top of the Terms and Privacy pages. Update when the text changes.
-  legalUpdated: "October 11, 2026",
+  legalUpdated: "October 13, 2026",
 };

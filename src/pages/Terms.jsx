@@ -40,6 +40,11 @@ const sections = [
           for keeping it secure. You must meet the minimum age for Discord and Roblox in your
           country, and you must follow Discord's and Roblox's own terms while using the Service.
         </p>
+        <p>
+          You can verify your Roblox account through Dock, a third-party service, to link it to your
+          Discord login. Only verify a Roblox account that you own. Dock's own terms and privacy
+          policy apply to what Dock does.
+        </p>
       </>
     ),
   },

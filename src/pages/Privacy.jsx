@@ -15,7 +15,13 @@ const sections = [
         <ul>
           <li>
             <strong>Discord account details.</strong> When you sign in with Discord we receive your
-            Discord user ID, username, display name and avatar.
+            Discord user ID, username, display name and avatar, and save them in our database so
+            your account is remembered.
+          </li>
+          <li>
+            <strong>Roblox account link.</strong> If you verify your Roblox account through Dock, we
+            receive your Roblox user ID, look up your public Roblox username, and store both next to
+            your Discord account.
           </li>
           <li>
             <strong>ER:LC server data.</strong> If a server is connected, we receive the server's
@@ -54,8 +60,14 @@ const sections = [
           Whale Maps session, because that is what the Service is for. They are not shown publicly.
         </p>
         <p>
-          We don't sell your personal data. We share it only with the hosting and infrastructure
-          providers that run the Service for us, or when the law requires it.
+          We don't sell your personal data. We share it only with the providers that run the Service
+          for us (Vercel for hosting and MongoDB Atlas for our database), or when the law requires
+          it.
+        </p>
+        <p>
+          Roblox verification is handled by Dock (docksys.xyz), a separate service. When you verify,
+          Dock sees your Discord and Roblox accounts under its own terms and privacy policy, and
+          tells us which Roblox account belongs to your Discord account.
         </p>
       </>
     ),
@@ -74,7 +86,8 @@ const sections = [
     title: "How long we keep data",
     body: (
       <p>
-        We keep your account details while your account is active. Live position data is used in
+        We keep your account details and Roblox link until you remove the link or ask us to delete
+        them. Live position data is used in
         real time to draw the map, and we don't build a long-term history of where you've been. Logs
         are kept only as long as needed for security and troubleshooting.
       </p>
@@ -94,7 +107,8 @@ const sections = [
     body: (
       <>
         <p>
-          You can leave a session, remove a server key, or stop using the Service at any time. You
+          You can leave a session, remove a server key, unlink your Roblox account on the Verify
+          page, or stop using the Service at any time. You
           can ask us to access, correct or delete the personal data we hold about you. If you're in
           the European Economic Area or the UK, you also have the right to object to or restrict
           certain processing.
