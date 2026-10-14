@@ -18,7 +18,7 @@ Repo: `whoisbrzy/Whale-Maps`. The owner also commits to `main`, so `git pull` be
 | Design system, landing page (hero, features, FAQ, footer), Terms, Privacy, 404 | Done |
 | Discord login (OAuth2 `identify`), profile + name imported into MongoDB | Done. Login verified with real credentials locally (2026-10-14); MongoDB storage still untested |
 | Roblox verification via Dock (`/verify` page, `/api/roblox/*`) | Done. Tested against a fake Dock that follows its docs, **not yet against the real Dock** |
-| Vercel config (`vercel.json`, `api/[...path].js`) | Written and deployed (project `waylosys`), but older deploys from an outdated source 404'd the `/auth/*` and `/api/roblox/*` routes; make sure the project builds from this repo |
+| Vercel config (`vercel.json`, `api/[...path].js`) | Deployed and working (production: `waylorblx.vercel.app`, project `waylosys`, scope `egyptianalis-projects`, GitHub-connected). NOTE: `/auth/*` and `/api/*` rewrites must target the function directly (`/api/[...path]`) — routing them to `/api/auth/:path*` makes Vercel's router 404 multi-segment API paths |
 | Map app, location sharing, ER:LC API connection, routes, camera alerts, setup wizard | **Not started** |
 
 The hero "Get Started" button points at `#map`, which does not exist yet. In `src/components/Features.jsx`, only the
