@@ -83,19 +83,125 @@
 /* ==========================================================================
    Navbar
    ========================================================================== */
-.nav {
+.topbar {
   position: fixed;
   inset: 0 0 auto 0;
   z-index: 50;
+}
+
+/* Announcement strip */
+.banner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--banner-h);
+  padding: 0 3rem;
+  background: linear-gradient(90deg, var(--blue-600), var(--blue-500) 50%, var(--blue-600));
+  color: #fff;
+  font-size: var(--fs-small);
+}
+.banner__text {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.banner__text svg {
+  width: 16px;
+  height: 16px;
+}
+.banner__close {
+  position: absolute;
+  right: max(0.75rem, calc((100% - var(--container)) / 2 + var(--gutter)));
+  top: 50%;
+  translate: 0 -50%;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.85);
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.banner__close:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+.banner__close svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Navbar: rounded top corners under the strip, links centered */
+.nav {
+  position: relative;
   height: var(--nav-h);
   background: var(--black);
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px 16px 0 0;
+}
+html[data-banner="off"] .nav {
+  border-radius: 0;
 }
 .nav__inner {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  height: 100%;
+}
+.nav__links {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  height: 100%;
+  gap: 0.15rem;
+}
+.nav__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.75rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  transition: color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.nav__link:hover,
+.nav__link[aria-expanded="true"] {
+  color: var(--text);
+}
+.nav__link svg {
+  width: 13px;
+  height: 13px;
+  transition: rotate var(--dur) var(--ease);
+}
+.nav__link[aria-expanded="true"] svg {
+  rotate: 180deg;
+}
+.nav__dd {
+  position: relative;
+}
+.nav__burger {
+  display: none;
+}
+@media (max-width: 860px) {
+  .nav__inner {
+    display: flex;
+    justify-content: space-between;
+  }
+  .nav__links {
+    display: none;
+  }
+  .nav__burger {
+    display: inline-flex;
+  }
 }
 .nav__brand {
   display: inline-flex;
@@ -162,7 +268,7 @@
   display: grid;
   place-items: center;
   min-height: 100svh;
-  padding: calc(var(--nav-h) + var(--space-7)) 0 var(--space-8);
+  padding: calc(var(--topbar-h) + var(--space-7)) 0 var(--space-8);
   overflow: hidden;
   isolation: isolate;
   text-align: center;

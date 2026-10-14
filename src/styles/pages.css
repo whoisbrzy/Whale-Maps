@@ -17,7 +17,7 @@
 .section {
   padding: var(--space-8) 0;
   background: var(--black);
-  scroll-margin-top: var(--nav-h);
+  scroll-margin-top: var(--topbar-h);
 }
 .section__title {
   font-size: var(--fs-h1);
@@ -33,7 +33,7 @@
 
 .page {
   min-height: 70svh;
-  padding: calc(var(--nav-h) + var(--space-8)) 0 var(--space-8);
+  padding: calc(var(--topbar-h) + var(--space-8)) 0 var(--space-8);
   background: var(--black);
 }
 .page--center {
@@ -252,7 +252,7 @@
     padding-top: var(--space-7);
   }
   .page {
-    padding-top: calc(var(--nav-h) + var(--space-7));
+    padding-top: calc(var(--topbar-h) + var(--space-7));
   }
   .footer__grid {
     grid-template-columns: 1fr 1fr;
@@ -424,4 +424,12 @@
 .btn[disabled] {
   opacity: 0.6;
   cursor: default;
+}
+
+.nav__menu--left {
+  left: 0;
+  right: auto;
+}
+.nav__actions {
+  justify-self: end;
 }

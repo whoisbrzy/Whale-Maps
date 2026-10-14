@@ -89,6 +89,8 @@
   --container: 1240px;
   --gutter: 1.25rem;
   --nav-h: 46px;
+  --banner-h: 38px; /* announcement strip above the navbar; 0 once dismissed */
+  --topbar-h: calc(var(--nav-h) + var(--banner-h));
 
   /* ---- Radius / motion ------------------------------------------------ */
   --radius-sm: 8px;
@@ -97,4 +99,8 @@
   --radius-pill: 999px;
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   --dur: 160ms;
+}
+
+html[data-banner="off"] {
+  --banner-h: 0px;
 }
