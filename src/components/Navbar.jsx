@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LogoMark, Discord, Menu } from "./Icons.jsx";
+import { LogoMark, Wordmark, Discord, Menu } from "./Icons.jsx";
 import { useAuth } from "../auth.jsx";
 
 const MENU = [
@@ -38,7 +38,7 @@ export default function Navbar() {
       <div className="container nav__inner">
         <Link className="nav__brand" to="/" aria-label="Waylo home">
           <LogoMark />
-          Waylo
+          <Wordmark />
         </Link>
 
         <div className="nav__actions" ref={wrapRef}>

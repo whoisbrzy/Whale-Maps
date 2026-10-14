@@ -116,6 +116,7 @@ exist so tests can point at fakes; never set them in production.
   swap the `@font-face` blocks for Inter if that matters.
 - Brand name is **Waylo** (renamed from Whale Maps on 2026-10-14; the GitHub repo, `package.json` name and MongoDB db `whalemaps` keep the old name on purpose, so existing data and links keep working).
 - Logo is `public/logo.png` (dark rounded square, white map pin, 150px), shown with `<LogoMark />`; `favicon.png` is the same icon.
+- Wordmark: `public/wordmark.png` (white lettering, transparent), shown with `<Wordmark />` next to the logo in the navbar, footer and hero headline (plain text name "Waylo" is still used in body copy).
 - Hero: "Navigate" is set in Pacifico (a curly script, SIL OFL, `public/fonts/pacifico-regular.woff2`, class `.hero__script`); the background is a crossfading slideshow of `public/hero/slide-*.jpg` (list in `src/components/Hero.jsx`, 6.5s per slide, dots to jump, no autoplay with reduced motion).
 - Mobile matters (second-screen use): check 390px wide, nothing may scroll sideways.
 

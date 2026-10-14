@@ -4,6 +4,13 @@ export function LogoMark({ className = "", ...rest }) {
   return <img className={`logo-mark ${className}`} src="/logo.png" alt="" width="150" height="150" {...rest} />;
 }
 
+/* The Waylo wordmark (public/wordmark.png, white lettering on transparent).
+   Pass alt="Waylo" where it stands alone as the page's brand text; leave it empty
+   where a link's aria-label already names the brand. */
+export function Wordmark({ className = "", alt = "", ...rest }) {
+  return <img className={`wordmark ${className}`} src="/wordmark.png" alt={alt} width="720" height="254" {...rest} />;
+}
+
 export function ArrowRight(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>

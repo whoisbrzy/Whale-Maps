@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { LogoMark } from "./Icons.jsx";
+import { LogoMark, Wordmark } from "./Icons.jsx";
 import { SITE } from "../config.js";
 
 export default function Footer() {
@@ -10,7 +10,7 @@ export default function Footer() {
           <div className="footer__about">
             <Link className="nav__brand" to="/" aria-label="Waylo home">
               <LogoMark />
-              {SITE.name}
+              <Wordmark />
             </Link>
             <p>A live map for ER:LC with location sharing, routes and camera alerts.</p>
           </div>

@@ -105,6 +105,16 @@
   font-weight: 700;
   letter-spacing: -0.04em;
 }
+.wordmark {
+  display: inline-block;
+  flex: none;
+  width: auto;
+  user-select: none;
+}
+.nav__brand .wordmark {
+  height: 24px;
+  transform: translateY(1px);
+}
 .nav__brand .logo-mark {
   height: 28px;
   width: 28px;
@@ -244,6 +254,10 @@
   align-items: center;
   gap: 0.12em;
   vertical-align: baseline;
+}
+.hero__brand .wordmark {
+  height: 1.08em;
+  transform: translateY(0.1em); /* sit the letters on the same baseline as "with" */
 }
 .hero__brand .logo-mark {
   height: 0.8em;

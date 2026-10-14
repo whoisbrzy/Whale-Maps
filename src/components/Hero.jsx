@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { LogoMark, ArrowRight, ArrowUp, Discord } from "./Icons.jsx";
+import { LogoMark, Wordmark, ArrowRight, ArrowUp, Discord } from "./Icons.jsx";
 import { useAuth } from "../auth.jsx";
 
 /* Background slideshow. To change it, replace the files in public/hero/ or edit this list.
@@ -59,7 +59,7 @@ export default function Hero() {
             with{" "}
             <span className="hero__brand">
               <LogoMark />
-              Waylo
+              <Wordmark alt="Waylo" />
             </span>
           </span>
         </h1>
