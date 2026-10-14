@@ -1,7 +1,7 @@
 # AGENTS.md: handoff notes for AI assistants and developers
 
 Read this first. It says what Whale Maps is, what exists, what does not, and how to work on it safely.
-Last updated: 2026-10-13. If you change how something works, update this file in the same commit.
+Last updated: 2026-10-14. If you change how something works, update this file in the same commit.
 
 ## What this is
 
@@ -16,9 +16,9 @@ Repo: `whoisbrzy/Whale-Maps`. The owner also commits to `main`, so `git pull` be
 | Area | State |
 | --- | --- |
 | Design system, landing page (hero, features, FAQ, footer), Terms, Privacy, 404 | Done |
-| Discord login (OAuth2 `identify`), profile + name imported into MongoDB | Done. Tested against fakes, **not yet with real credentials** |
+| Discord login (OAuth2 `identify`), profile + name imported into MongoDB | Done. Login verified with real credentials locally (2026-10-14); MongoDB storage still untested |
 | Roblox verification via Dock (`/verify` page, `/api/roblox/*`) | Done. Tested against a fake Dock that follows its docs, **not yet against the real Dock** |
-| Vercel config (`vercel.json`, `api/[...path].js`) | Written, **never deployed or run on Vercel yet** |
+| Vercel config (`vercel.json`, `api/[...path].js`) | Written and deployed (project `waylosys`), but older deploys from an outdated source 404'd the `/auth/*` and `/api/roblox/*` routes; make sure the project builds from this repo |
 | Map app, location sharing, ER:LC API connection, routes, camera alerts, setup wizard | **Not started** |
 
 The hero "Get Started" button points at `#map`, which does not exist yet. In `src/components/Features.jsx`, only the
