@@ -53,7 +53,7 @@ public/                SF Pro woff2 fonts, logo.png, hero.jpg, favicon.png
 | --- | --- |
 | `GET /api/health` | `{ok:true}` |
 | `GET /api/me` | `{user: {id,name,avatar,roblox:{id,name}\|null}\|null, authEnabled, robloxEnabled}` |
-| `GET /auth/login` | signed single-use `state` cookie, redirect to Discord (scope `identify`, `prompt=none`) |
+| `GET /auth/login` | signed single-use `state` cookie, redirect to Discord (scope `identify`) |
 | `GET /auth/callback` | verify state, exchange code, read profile, **upsert profile into MongoDB**, load any Roblox link, set 7-day session cookie |
 | `POST /auth/logout` | clear cookie (204) |
 | `POST /api/roblox/start` | creates a Dock session (`clientId` = Discord ID), returns `{sid, verifyUrl}` (https only) |
