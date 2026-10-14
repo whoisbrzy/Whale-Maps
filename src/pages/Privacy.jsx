@@ -57,7 +57,7 @@ const sections = [
       <>
         <p>
           Your name and in-game position are visible to other people in the same ER:LC server and
-          Whale Maps session, because that is what the Service is for. They are not shown publicly.
+          Waylo session, because that is what the Service is for. They are not shown publicly.
         </p>
         <p>
           We don't sell your personal data. We share it only with the providers that run the Service
@@ -154,7 +154,7 @@ export default function Privacy() {
   return (
     <LegalPage
       title="Privacy Policy"
-      intro="This policy explains what information Whale Maps collects, why, and the choices you have."
+      intro="This policy explains what information Waylo collects, why, and the choices you have."
       sections={sections}
     />
   );

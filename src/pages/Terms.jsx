@@ -8,23 +8,23 @@ const sections = [
     title: "Agreeing to these terms",
     body: (
       <p>
-        By using Whale Maps ("the Service") you agree to these Terms of Service. If you don't agree,
+        By using Waylo ("the Service") you agree to these Terms of Service. If you don't agree,
         please don't use the Service. If you use it on behalf of an ER:LC server or community, you
         confirm you're allowed to accept these terms for it.
       </p>
     ),
   },
   {
-    title: "What Whale Maps is",
+    title: "What Waylo is",
     body: (
       <>
         <p>
-          Whale Maps is a roleplay companion tool that shows a live map for ER:LC, including shared
+          Waylo is a roleplay companion tool that shows a live map for ER:LC, including shared
           player locations, routes and camera alerts. It is intended for use inside the game's
           roleplay.
         </p>
         <p>
-          Whale Maps is an independent community project. It is not affiliated with, endorsed by or
+          Waylo is an independent community project. It is not affiliated with, endorsed by or
           sponsored by Police Roleplay Community, Roblox or Discord. ER:LC, Roblox and Discord are
           trademarks of their respective owners.
         </p>
@@ -113,7 +113,7 @@ const sections = [
     title: "Limit of liability",
     body: (
       <p>
-        To the maximum extent allowed by law, Whale Maps and the people who run it are not liable
+        To the maximum extent allowed by law, Waylo and the people who run it are not liable
         for indirect or consequential losses, or for losses from using or being unable to use the
         Service. Nothing in these terms limits liability that can't be limited by law.
       </p>
@@ -142,7 +142,7 @@ export default function Terms() {
   return (
     <LegalPage
       title="Terms of Service"
-      intro="These terms explain the rules for using Whale Maps. Please read them before you use the Service."
+      intro="These terms explain the rules for using Waylo. Please read them before you use the Service."
       sections={sections}
     />
   );

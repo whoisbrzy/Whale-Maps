@@ -1,4 +1,4 @@
-# Whale Maps
+# Waylo
 
 High-Quality ER:LC tool
 

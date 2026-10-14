@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { WhaleMark, Discord, Menu } from "./Icons.jsx";
+import { LogoMark, Discord, Menu } from "./Icons.jsx";
 import { useAuth } from "../auth.jsx";
 
 const MENU = [
@@ -36,9 +36,9 @@ export default function Navbar() {
   return (
     <header className="nav">
       <div className="container nav__inner">
-        <Link className="nav__brand" to="/" aria-label="Whale Maps home">
-          <WhaleMark />
-          Whale Maps
+        <Link className="nav__brand" to="/" aria-label="Waylo home">
+          <LogoMark />
+          Waylo
         </Link>
 
         <div className="nav__actions" ref={wrapRef}>

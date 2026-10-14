@@ -1,7 +1,7 @@
-/* The Whale Maps logo (public/logo.png) is a white silhouette on a transparent
-   background. Rendering it as a CSS mask lets it take any text color. */
-export function WhaleMark({ className = "", ...rest }) {
-  return <span className={`whale-mark ${className}`} role="img" aria-hidden="true" {...rest} />;
+/* The Waylo logo: public/logo.png (a dark rounded square with a white map pin).
+   Decorative here, because the brand name always sits next to it as text. */
+export function LogoMark({ className = "", ...rest }) {
+  return <img className={`logo-mark ${className}`} src="/logo.png" alt="" width="150" height="150" {...rest} />;
 }
 
 export function ArrowRight(props) {

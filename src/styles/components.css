@@ -1,14 +1,14 @@
 /* ==========================================================================
-   Logo mark (white PNG silhouette, colored with currentColor via a mask)
+   Logo mark (public/logo.png, a dark rounded square with a white map pin)
    ========================================================================== */
-.whale-mark {
+.logo-mark {
   display: inline-block;
   flex: none;
-  aspect-ratio: 276 / 209;
-  background-color: currentColor;
-  -webkit-mask: url("/logo.png") center / contain no-repeat;
-  mask: url("/logo.png") center / contain no-repeat;
+  aspect-ratio: 1;
+  border-radius: 24%;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.14);
 }
+
 
 /* ==========================================================================
    Buttons
@@ -105,9 +105,9 @@
   font-weight: 700;
   letter-spacing: -0.04em;
 }
-.nav__brand .whale-mark {
-  height: 22px;
-  color: #fff;
+.nav__brand .logo-mark {
+  height: 28px;
+  width: 28px;
 }
 .nav__actions {
   display: flex;
@@ -158,8 +158,8 @@
   text-align: center;
 }
 
-/* Background: drop a screenshot at /public/hero.jpg and it fades in under
-   the same dark overlay. Until then the gradient below stands in. */
+/* Background slideshow: slides crossfade (see Hero.jsx). While images load, the
+   gradient on .hero__bg stands in. */
 .hero__bg {
   position: absolute;
   inset: 0;
@@ -168,13 +168,44 @@
     radial-gradient(60% 55% at 50% 38%, rgba(47, 107, 255, 0.28), transparent 70%),
     radial-gradient(45% 40% at 85% 70%, rgba(34, 211, 238, 0.12), transparent 70%),
     linear-gradient(180deg, #07101f 0%, #060a12 55%, #000 100%);
-  background-size: cover;
-  background-position: center;
 }
-.hero__bg--image {
-  background-image: var(--hero-image);
+.hero__slide {
+  position: absolute;
+  inset: 0;
   background-size: cover;
   background-position: center 60%;
+  opacity: 0;
+  transform: scale(1.04);
+  transition: opacity 1.4s ease, transform 7s linear;
+}
+.hero__slide.is-active {
+  opacity: 1;
+  transform: scale(1.12);
+}
+.hero__dots {
+  position: absolute;
+  bottom: 1.1rem;
+  left: 50%;
+  translate: -50% 0;
+  display: flex;
+  gap: 0.5rem;
+  z-index: 1;
+}
+.hero__dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+  transition: background var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+.hero__dot:hover {
+  background: rgba(255, 255, 255, 0.65);
+}
+.hero__dot.is-active {
+  background: #fff;
+  transform: scale(1.25);
 }
 .hero__shade {
   position: absolute;
@@ -195,15 +226,29 @@
 .hero__title-line {
   display: block;
 }
+.hero__title-line:first-child {
+  margin-bottom: 0.12em; /* room for the script's descenders */
+}
+/* "Navigate": a curly script that stays easy to read. Tracking is reset because the
+   headline's tight letter-spacing would make the letters collide. */
+.hero__script {
+  font-family: var(--font-script);
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.15;
+  padding-right: 0.08em;
+  text-shadow: 0 4px 30px rgba(0, 0, 0, 0.45);
+}
 .hero__brand {
   display: inline-flex;
   align-items: center;
   gap: 0.12em;
   vertical-align: baseline;
 }
-.hero__brand .whale-mark {
-  height: 0.72em;
-  color: #fff;
+.hero__brand .logo-mark {
+  height: 0.8em;
+  width: 0.8em;
+  align-self: center;
 }
 .hero__lead {
   max-width: 38rem;
@@ -222,7 +267,7 @@
 }
 .hero__scroll {
   position: absolute;
-  bottom: 2.25rem;
+  bottom: 2.6rem;
   left: 50%;
   translate: -50% 0;
   color: var(--text-muted);
@@ -242,5 +287,13 @@
   }
   .nav__login {
     padding: 0.35rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero__slide,
+  .hero__slide.is-active {
+    transform: none;
+    transition: opacity 0.01s;
   }
 }

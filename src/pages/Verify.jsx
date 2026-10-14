@@ -10,7 +10,7 @@ const MESSAGES = {
   expired: "That verification expired. Start again.",
   cancelled: "Verification was cancelled. Start again when you're ready.",
   mismatch: "That verification belongs to a different Discord account. Log in with the Discord account you verified.",
-  taken: "That Roblox account is already linked to another Whale Maps account.",
+  taken: "That Roblox account is already linked to another Waylo account.",
 };
 
 export default function Verify() {

@@ -1,11 +1,11 @@
 # AGENTS.md: handoff notes for AI assistants and developers
 
-Read this first. It says what Whale Maps is, what exists, what does not, and how to work on it safely.
+Read this first. It says what Waylo is, what exists, what does not, and how to work on it safely.
 Last updated: 2026-10-14. If you change how something works, update this file in the same commit.
 
 ## What this is
 
-**Whale Maps** is a website and web app for ER:LC (Emergency Response: Liberty County, a Roblox game): a roleplay
+**Waylo** is a website and web app for ER:LC (Emergency Response: Liberty County, a Roblox game): a roleplay
 companion with a live map, location sharing, routes and camera alerts, fed by the ER:LC API. Visual references from
 the owner: anchr.gg, uplinkrblx.xyz, chirper.app (dark, polished, app-like). Owner: GitHub `whoisbrzy`.
 Repo: `whoisbrzy/Whale-Maps`. The owner also commits to `main`, so `git pull` before you push.
@@ -43,7 +43,7 @@ src/pages/             Home, Verify, Terms, Privacy, NotFound
 src/components/        Navbar, Hero, Features, Faq, Footer, Layout, LegalPage, Icons, ScrollManager
 src/styles/            tokens.css (variables) -> base.css -> components.css -> pages.css
 src/config.js          site name, contact email (empty = Contact links hidden), legal "last updated" date
-public/                SF Pro woff2 fonts, logo.png, hero.jpg, favicon.png
+public/                fonts (SF Pro, Pacifico woff2), logo.png, favicon.png, hero/ (slideshow images)
 .env.example           every environment variable
 ```
 
@@ -62,7 +62,7 @@ public/                SF Pro woff2 fonts, logo.png, hero.jpg, favicon.png
 
 Security notes: cookies are `HttpOnly; SameSite=Lax` (`Secure` + `__Host-` prefix when `PUBLIC_URL` is https); POSTs with
 `Sec-Fetch-Site: cross-site` are refused; Discord's access token is never stored; the Dock key never leaves the server;
-one Roblox account can link to only one Whale Maps account (unique sparse index on `roblox.id`). Rate limits are in memory,
+one Roblox account can link to only one Waylo account (unique sparse index on `roblox.id`). Rate limits are in memory,
 so on Vercel they are per instance (best effort).
 **CSP lives in two places that must match: `lib/config.js` (`CSP`) and `vercel.json` (`headers`).** When you add the map,
 extend `img-src` (map images) and `connect-src` (WebSockets / API hosts) in both.
@@ -114,7 +114,9 @@ exist so tests can point at fakes; never set them in production.
   Map/status colors: online `#34d399`, route `#22d3ee`, camera `#f59e0b`, danger `#f43f5e`.
 - Font: SF Pro Display (Regular, Medium, Bold only) self-hosted. **Apple's license is meant for mockups, not public sites**;
   swap the `@font-face` blocks for Inter if that matters.
-- Logo is a white PNG drawn through a CSS mask (`<WhaleMark />`), so it takes `currentColor`.
+- Brand name is **Waylo** (renamed from Whale Maps on 2026-10-14; the GitHub repo, `package.json` name and MongoDB db `whalemaps` keep the old name on purpose, so existing data and links keep working).
+- Logo is `public/logo.png` (dark rounded square, white map pin, 150px), shown with `<LogoMark />`; `favicon.png` is the same icon.
+- Hero: "Navigate" is set in Pacifico (a curly script, SIL OFL, `public/fonts/pacifico-regular.woff2`, class `.hero__script`); the background is a crossfading slideshow of `public/hero/slide-*.jpg` (list in `src/components/Hero.jsx`, 6.5s per slide, dots to jump, no autoplay with reduced motion).
 - Mobile matters (second-screen use): check 390px wide, nothing may scroll sideways.
 
 ## Legal pages

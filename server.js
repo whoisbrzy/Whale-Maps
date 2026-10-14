@@ -1,4 +1,4 @@
-/* Whale Maps local / self-hosted server.
+/* Waylo local / self-hosted server.
  *
  * On Vercel this file is NOT used: Vercel serves dist/ itself and runs api/[...path].js.
  * Use this for development and for hosting on any plain Node server (Node 22).
@@ -126,7 +126,7 @@ server.on("error", (err) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`Whale Maps listening on ${HOST}:${PORT}`);
+  console.log(`Waylo listening on ${HOST}:${PORT}`);
   console.log(
     AUTH_ON
       ? `Discord login is ON. Redirect URI to register in the Discord portal: ${REDIRECT_URI}`
