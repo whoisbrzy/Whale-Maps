@@ -1,11 +1,7 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LogoMark, Wordmark, Discord, Menu, IconChevron, IconClose, IconSpark } from "./Icons.jsx";
+import { LogoMark, Wordmark, Discord, Menu, IconChevron } from "./Icons.jsx";
 import { useAuth } from "../auth.jsx";
-
-// Change the key when the announcement changes, so people who dismissed the old one see the new one.
-const BANNER_KEY = "waylo-banner-releasing-soon";
-const BANNER_TEXT = "Releasing soon";
 
 const LINKS = [
   { to: "/#features", label: "Features" },
@@ -18,34 +14,11 @@ const RESOURCES = [
 ];
 const MOBILE = [...LINKS, ...RESOURCES];
 
-function bannerDismissed() {
-  try {
-    return localStorage.getItem(BANNER_KEY) === "1";
-  } catch {
-    return false; // storage can be blocked; just show the strip
-  }
-}
-
 export default function Navbar() {
   const [menu, setMenu] = useState(null); // null | "resources" | "user" | "mobile"
-  const [banner, setBanner] = useState(() => !bannerDismissed());
   const navRef = useRef(null);
   const location = useLocation();
   const { user, logout } = useAuth();
-
-  // Tell the CSS how tall the topbar is (page padding and anchor offsets follow it).
-  useLayoutEffect(() => {
-    document.documentElement.dataset.banner = banner ? "on" : "off";
-  }, [banner]);
-
-  const dismissBanner = () => {
-    setBanner(false);
-    try {
-      localStorage.setItem(BANNER_KEY, "1");
-    } catch {
-      /* ignore */
-    }
-  };
 
   // Close menus on navigation, outside click and Escape.
   useEffect(() => setMenu(null), [location.pathname, location.hash]);
@@ -67,24 +40,13 @@ export default function Navbar() {
 
   return (
     <header className="topbar">
-      {banner && (
-        <div className="banner" role="region" aria-label="Announcement">
-          <p className="banner__text">
-            <IconSpark aria-hidden="true" />
-            {BANNER_TEXT}
-          </p>
-          <button className="banner__close" type="button" aria-label="Dismiss announcement" onClick={dismissBanner}>
-            <IconClose />
-          </button>
-        </div>
-      )}
-
       <div className="nav" ref={navRef}>
-        <div className="container nav__inner">
+        <div className="nav__inner">
           <Link className="nav__brand" to="/" aria-label="Waylo home">
             <LogoMark />
             <Wordmark />
           </Link>
+          <span className="nav__chip">Releasing soon</span>
 
           <nav className="nav__links" aria-label="Main">
             {LINKS.map((l) => (

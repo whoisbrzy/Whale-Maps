@@ -85,12 +85,13 @@ const ITEMS = [
 export default function Faq() {
   return (
     <section className="section" id="faq" aria-labelledby="faq-title">
-      <div className="container container--narrow">
-        <p className="eyebrow">FAQ</p>
-        <h2 className="section__title" id="faq-title">
-          Frequently asked questions
-        </h2>
-        <p className="section__lead">Quick answers about how Waylo works.</p>
+      <div className="container faqwrap">
+        <div className="faqwrap__head">
+          <h2 className="section__title" id="faq-title">
+            Questions, answered
+          </h2>
+          <p className="section__lead">How Waylo works, in plain words.</p>
+        </div>
 
         <div className="faq">
           {ITEMS.map((item) => (
@@ -98,7 +99,7 @@ export default function Faq() {
               <summary className="faq__q">
                 <span>{item.q}</span>
                 <svg className="faq__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M6 9l6 6 6-6" />
+                  <path d="M12 5v14M5 12h14" />
                 </svg>
               </summary>
               <div className="faq__a">{item.a}</div>

@@ -6,7 +6,6 @@ export default function LegalPage({ title, intro, sections }) {
   return (
     <article className="page">
       <div className="container container--narrow">
-        <p className="eyebrow">Legal</p>
         <h1 className="page__title">{title}</h1>
         <p className="page__meta">Last updated {SITE.legalUpdated}</p>
         {intro && <p className="page__lead">{intro}</p>}

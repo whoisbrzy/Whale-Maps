@@ -17,7 +17,6 @@ export default function Footer() {
 
           <nav className="footer__col" aria-label="Product">
             <h3>Product</h3>
-            <a href="#map">Open the map</a>
             <a href="/auth/login">Login with Discord</a>
             <Link to="/#features">Features</Link>
             <Link to="/#faq">FAQ</Link>
@@ -30,6 +29,8 @@ export default function Footer() {
             {SITE.contactEmail && <a href={`mailto:${SITE.contactEmail}`}>Contact</a>}
           </nav>
         </div>
+
+        <Wordmark className="footer__big" aria-hidden="true" />
 
         <div className="footer__bottom">
           <p>
