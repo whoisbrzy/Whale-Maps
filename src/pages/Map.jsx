@@ -67,21 +67,25 @@ export default function MapPage() {
       .catch(() => {});
   }, [serverId, paramName]);
 
-  // Fetch real units for this server if an API is connected
+  // Fetch real units for this server if an API is connected with 10s live interval
   useEffect(() => {
     if (!serverId) return;
     setLoadingUnits(true);
-    fetch(`/api/servers/${encodeURIComponent(serverId)}/patrol`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data?.players) {
-          setActiveUnits(data.players);
-        }
-      })
-      .catch(() => {
-        setActiveUnits([]);
-      })
-      .finally(() => setLoadingUnits(false));
+    const fetchPatrol = () => {
+      fetch(`/api/servers/${encodeURIComponent(serverId)}/patrol`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.players) {
+            setActiveUnits(data.players);
+          }
+        })
+        .catch(() => {})
+        .finally(() => setLoadingUnits(false));
+    };
+
+    fetchPatrol();
+    const interval = setInterval(fetchPatrol, 10000);
+    return () => clearInterval(interval);
   }, [serverId]);
 
   const handleMouseDown = (e) => {
@@ -226,8 +230,20 @@ export default function MapPage() {
                 <IconClose />
               </button>
             </div>
+            {selectedUnit.name && selectedUnit.callsign && (
+              <p style={{ margin: "0.2rem 0", fontSize: "0.8rem", color: "#fff" }}>{selectedUnit.name}</p>
+            )}
             {selectedUnit.team && <p className="tactical-unit-card__name">{selectedUnit.team}</p>}
-            {selectedUnit.status && <span className="badge badge--live">{selectedUnit.status}</span>}
+            {selectedUnit.postal && (
+              <p style={{ margin: "0.3rem 0 0", fontSize: "0.78rem", color: "var(--text-soft)" }}>
+                Postal: <strong style={{ color: "var(--blue-300)" }}>#{selectedUnit.postal}</strong> {selectedUnit.street || ""}
+              </p>
+            )}
+            {selectedUnit.wantedStars > 0 && (
+              <span style={{ color: "#ef4444", fontSize: "0.85rem", marginTop: "0.2rem", display: "inline-block" }}>
+                {"★".repeat(selectedUnit.wantedStars)} Wanted
+              </span>
+            )}
           </div>
         )}
 
@@ -296,6 +312,11 @@ export default function MapPage() {
                       <strong>{u.callsign || u.name}</strong>
                       <span className="tactical-drawer__status">{u.team || "Active"}</span>
                     </div>
+                    {u.postal && (
+                      <div style={{ fontSize: "0.75rem", color: "var(--text-soft)", marginTop: "0.15rem" }}>
+                        #{u.postal} {u.street || ""}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))
