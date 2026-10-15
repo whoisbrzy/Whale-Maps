@@ -78,7 +78,6 @@ export default function Servers() {
   // Form fields
   const [serverName, setServerName] = useState("");
   const [selectedDiscordId, setSelectedDiscordId] = useState("");
-  const [serverIcon, setServerIcon] = useState("");
   const [erlcApiKey, setErlcApiKey] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -183,7 +182,7 @@ export default function Servers() {
     setErrorMsg("");
 
     const tempId = `srv-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
-    const importedLogo = (serverIcon.trim() || (selectedGuild ? getGuildIconUrl(selectedGuild) : "") || "").trim();
+    const importedLogo = selectedGuild ? getGuildIconUrl(selectedGuild) : "";
 
     const newServer = {
       id: tempId,
@@ -207,7 +206,6 @@ export default function Servers() {
     setShowAddModal(false);
     setServerName("");
     setSelectedDiscordId("");
-    setServerIcon("");
     setErlcApiKey("");
     setSubmitting(false);
 
@@ -247,10 +245,6 @@ export default function Servers() {
     if (g) {
       if (!serverName.trim()) {
         setServerName(g.name);
-      }
-      const iconUrl = getGuildIconUrl(g);
-      if (iconUrl) {
-        setServerIcon(iconUrl);
       }
     }
   };
@@ -348,9 +342,6 @@ export default function Servers() {
         ) : (
           <div className={`servers__grid servers__grid--${viewMode}`}>
             {servers.map((srv) => {
-              const matchedGuild = ownedGuilds.find((g) => g.id === srv.discordServerId);
-              const serverLogo = srv.icon || (matchedGuild ? getGuildIconUrl(matchedGuild) : "");
-
               return (
                 <article key={srv.id} className="server-card">
                   <div className="server-card__body">
@@ -358,23 +349,7 @@ export default function Servers() {
                     <div className="server-card__top">
                       <div className="server-card__ident">
                         <div className="server-card__avatar">
-                          {serverLogo ? (
-                            <img
-                              src={serverLogo}
-                              alt=""
-                              className="server-card__avatar-img"
-                              referrerPolicy="no-referrer"
-                              onError={(e) => {
-                                e.currentTarget.style.display = "none";
-                                const fb = e.currentTarget.parentElement?.querySelector(".server-card__avatar-fallback");
-                                if (fb) fb.style.display = "grid";
-                              }}
-                            />
-                          ) : null}
-                          <span
-                            className="server-card__avatar-fallback"
-                            style={serverLogo ? { display: "none" } : undefined}
-                          >
+                          <span className="server-card__avatar-fallback">
                             {(srv.name || "Server").slice(0, 2).toUpperCase()}
                           </span>
                         </div>
@@ -412,31 +387,6 @@ export default function Servers() {
                             >
                               Server Dashboard
                             </Link>
-                            <button
-                              type="button"
-                              className="nav__menu-link"
-                              style={{ background: "transparent", border: 0, textAlign: "left", width: "100%", cursor: "pointer", font: "inherit", color: "inherit" }}
-                              onClick={() => {
-                                const url = prompt("Enter Server Logo URL for " + (srv.name || "this server") + ":", srv.icon || "");
-                                if (url !== null) {
-                                  const trimmed = url.trim();
-                                  setServers((prev) => {
-                                    const updated = prev.map((item) => (item.id === srv.id ? { ...item, icon: trimmed } : item));
-                                    saveStoredServers(updated, user?.id);
-                                    return updated;
-                                  });
-                                  fetch("/api/servers", {
-                                    method: "POST",
-                                    headers: { "Content-Type": "application/json" },
-                                    credentials: "same-origin",
-                                    body: JSON.stringify({ ...srv, icon: trimmed }),
-                                  }).catch(() => {});
-                                  setActiveMenu(null);
-                                }
-                              }}
-                            >
-                              Change Logo
-                            </button>
                           </div>
                         )}
                       </div>
@@ -635,60 +585,6 @@ export default function Servers() {
                     </div>
                   </div>
                 )}
-              </label>
-
-              <label className="modal-label">
-                <span>Server Logo / Icon <small>(optional)</small></span>
-                <div style={{ display: "flex", gap: "0.65rem", alignItems: "center" }}>
-                  {serverIcon ? (
-                    <img
-                      src={serverIcon}
-                      alt=""
-                      referrerPolicy="no-referrer"
-                      style={{
-                        width: "38px",
-                        height: "38px",
-                        borderRadius: "8px",
-                        objectFit: "cover",
-                        flexShrink: 0,
-                        border: "1px solid rgba(47, 107, 255, 0.4)",
-                        background: "rgba(47, 107, 255, 0.1)",
-                      }}
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                      }}
-                    />
-                  ) : (
-                    <div
-                      style={{
-                        width: "38px",
-                        height: "38px",
-                        borderRadius: "8px",
-                        background: "rgba(255, 255, 255, 0.05)",
-                        border: "1px dashed rgba(255, 255, 255, 0.16)",
-                        display: "grid",
-                        placeItems: "center",
-                        fontSize: "0.72rem",
-                        color: "var(--text-soft)",
-                        flexShrink: 0,
-                      }}
-                    >
-                      Logo
-                    </div>
-                  )}
-                  <input
-                    type="url"
-                    className="modal-input modal-input--blue-focus"
-                    placeholder="Auto-imported from Discord or paste image URL"
-                    value={serverIcon}
-                    onChange={(e) => setServerIcon(e.target.value)}
-                  />
-                </div>
-                <small className="modal-hint">
-                  {serverIcon
-                    ? "✓ Logo ready to import! You can also paste another image URL if desired."
-                    : "Automatically populated when selecting a Discord server, or paste any image URL directly."}
-                </small>
               </label>
 
               <label className="modal-label">
