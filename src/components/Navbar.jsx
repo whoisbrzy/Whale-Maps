@@ -144,6 +144,9 @@ export default function Navbar() {
                     <Link to="/verify" className="nav__menu-link" role="menuitem">
                       Verify Roblox
                     </Link>
+                    <Link to="/settings" className="nav__menu-link" role="menuitem">
+                      Account Settings
+                    </Link>
                     <button type="button" className="nav__menu-link nav__menu-link--button" role="menuitem" onClick={logout}>
                       Log out
                     </button>
@@ -178,9 +181,14 @@ export default function Navbar() {
                   </Link>
                 ))}
                 {user && (
-                  <button type="button" className="nav__menu-link nav__menu-link--button" onClick={logout}>
-                    Log out
-                  </button>
+                  <>
+                    <Link to="/settings" className="nav__menu-link">
+                      Account Settings
+                    </Link>
+                    <button type="button" className="nav__menu-link nav__menu-link--button" onClick={logout}>
+                      Log out
+                    </button>
+                  </>
                 )}
               </nav>
             )}

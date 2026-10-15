@@ -5,6 +5,7 @@ import Verify from "./pages/Verify.jsx";
 import Servers from "./pages/Servers.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import MapPage from "./pages/Map.jsx";
+import Settings from "./pages/Settings.jsx";
 import Terms from "./pages/Terms.jsx";
 import Privacy from "./pages/Privacy.jsx";
 import NotFound from "./pages/NotFound.jsx";
@@ -18,6 +19,7 @@ export default function App() {
         <Route path="/servers" element={<Servers />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/verify" element={<Verify />} />
+        <Route path="/settings" element={<Settings />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="*" element={<NotFound />} />
