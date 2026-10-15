@@ -44,11 +44,12 @@ function getStoredServers() {
 }
 
 function getGuildIconUrl(guild) {
-  if (!guild || !guild.icon) return null;
+  if (!guild || !guild.icon) return "";
   if (typeof guild.icon === "string" && (guild.icon.startsWith("http://") || guild.icon.startsWith("https://"))) {
     return guild.icon;
   }
-  return `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png?size=128`;
+  const ext = typeof guild.icon === "string" && guild.icon.startsWith("a_") ? "gif" : "png";
+  return `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.${ext}?size=128`;
 }
 
 function saveStoredServers(list, userId) {
@@ -77,6 +78,7 @@ export default function Servers() {
   // Form fields
   const [serverName, setServerName] = useState("");
   const [selectedDiscordId, setSelectedDiscordId] = useState("");
+  const [serverIcon, setServerIcon] = useState("");
   const [erlcApiKey, setErlcApiKey] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -93,6 +95,27 @@ export default function Servers() {
     document.addEventListener("mousedown", handleOutsideClick);
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
+
+  // Auto-sync Discord logos for any servers that were created earlier without an icon
+  useEffect(() => {
+    if (discordGuilds.length > 0 && servers.length > 0) {
+      let changed = false;
+      const updated = servers.map((s) => {
+        if (!s.icon && s.discordServerId) {
+          const match = discordGuilds.find((g) => g.id === s.discordServerId);
+          if (match && match.icon) {
+            changed = true;
+            return { ...s, icon: getGuildIconUrl(match) };
+          }
+        }
+        return s;
+      });
+      if (changed) {
+        setServers(updated);
+        saveStoredServers(updated, user?.id);
+      }
+    }
+  }, [discordGuilds]);
 
   // Load servers from localStorage cache + API merge
   const fetchServers = async () => {
@@ -160,14 +183,14 @@ export default function Servers() {
     setErrorMsg("");
 
     const tempId = `srv-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
-    const importedLogo = selectedGuild ? getGuildIconUrl(selectedGuild) : "";
+    const importedLogo = (serverIcon.trim() || (selectedGuild ? getGuildIconUrl(selectedGuild) : "") || "").trim();
 
     const newServer = {
       id: tempId,
       name: cleanName,
       discordServerId: selectedDiscordId || "",
       discordServerName: selectedGuild ? selectedGuild.name : (cleanName || ""),
-      icon: importedLogo || "",
+      icon: importedLogo,
       erlcApiKey: erlcApiKey.trim(),
       role: "owner",
       players: 0,
@@ -184,6 +207,7 @@ export default function Servers() {
     setShowAddModal(false);
     setServerName("");
     setSelectedDiscordId("");
+    setServerIcon("");
     setErlcApiKey("");
     setSubmitting(false);
 
@@ -221,7 +245,13 @@ export default function Servers() {
     setSelectedDiscordId(guildId);
     const g = ownedGuilds.find((item) => item.id === guildId);
     if (g) {
-      setServerName(g.name);
+      if (!serverName.trim()) {
+        setServerName(g.name);
+      }
+      const iconUrl = getGuildIconUrl(g);
+      if (iconUrl) {
+        setServerIcon(iconUrl);
+      }
     }
   };
 
@@ -333,13 +363,20 @@ export default function Servers() {
                               src={serverLogo}
                               alt=""
                               className="server-card__avatar-img"
+                              referrerPolicy="no-referrer"
                               onError={(e) => {
                                 e.currentTarget.style.display = "none";
+                                const fb = e.currentTarget.parentElement?.querySelector(".server-card__avatar-fallback");
+                                if (fb) fb.style.display = "grid";
                               }}
                             />
-                          ) : (
-                            (srv.name || "Server").slice(0, 2).toUpperCase()
-                          )}
+                          ) : null}
+                          <span
+                            className="server-card__avatar-fallback"
+                            style={serverLogo ? { display: "none" } : undefined}
+                          >
+                            {(srv.name || "Server").slice(0, 2).toUpperCase()}
+                          </span>
                         </div>
                         <h2 className="server-card__name">{srv.name || "Server"}</h2>
                       </div>
@@ -375,6 +412,31 @@ export default function Servers() {
                             >
                               Server Dashboard
                             </Link>
+                            <button
+                              type="button"
+                              className="nav__menu-link"
+                              style={{ background: "transparent", border: 0, textAlign: "left", width: "100%", cursor: "pointer", font: "inherit", color: "inherit" }}
+                              onClick={() => {
+                                const url = prompt("Enter Server Logo URL for " + (srv.name || "this server") + ":", srv.icon || "");
+                                if (url !== null) {
+                                  const trimmed = url.trim();
+                                  setServers((prev) => {
+                                    const updated = prev.map((item) => (item.id === srv.id ? { ...item, icon: trimmed } : item));
+                                    saveStoredServers(updated, user?.id);
+                                    return updated;
+                                  });
+                                  fetch("/api/servers", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    credentials: "same-origin",
+                                    body: JSON.stringify({ ...srv, icon: trimmed }),
+                                  }).catch(() => {});
+                                  setActiveMenu(null);
+                                }
+                              }}
+                            >
+                              Change Logo
+                            </button>
                           </div>
                         )}
                       </div>
@@ -487,6 +549,7 @@ export default function Servers() {
                                   className="custom-guild-dd__avatar"
                                   src={iconUrl}
                                   alt=""
+                                  referrerPolicy="no-referrer"
                                   onError={(e) => {
                                     e.currentTarget.style.display = "none";
                                   }}
@@ -530,6 +593,7 @@ export default function Servers() {
                                   className="custom-guild-dd__avatar"
                                   src={iconUrl}
                                   alt=""
+                                  referrerPolicy="no-referrer"
                                   onError={(e) => {
                                     e.currentTarget.style.display = "none";
                                   }}
@@ -571,6 +635,60 @@ export default function Servers() {
                     </div>
                   </div>
                 )}
+              </label>
+
+              <label className="modal-label">
+                <span>Server Logo / Icon <small>(optional)</small></span>
+                <div style={{ display: "flex", gap: "0.65rem", alignItems: "center" }}>
+                  {serverIcon ? (
+                    <img
+                      src={serverIcon}
+                      alt=""
+                      referrerPolicy="no-referrer"
+                      style={{
+                        width: "38px",
+                        height: "38px",
+                        borderRadius: "8px",
+                        objectFit: "cover",
+                        flexShrink: 0,
+                        border: "1px solid rgba(47, 107, 255, 0.4)",
+                        background: "rgba(47, 107, 255, 0.1)",
+                      }}
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: "38px",
+                        height: "38px",
+                        borderRadius: "8px",
+                        background: "rgba(255, 255, 255, 0.05)",
+                        border: "1px dashed rgba(255, 255, 255, 0.16)",
+                        display: "grid",
+                        placeItems: "center",
+                        fontSize: "0.72rem",
+                        color: "var(--text-soft)",
+                        flexShrink: 0,
+                      }}
+                    >
+                      Logo
+                    </div>
+                  )}
+                  <input
+                    type="url"
+                    className="modal-input modal-input--blue-focus"
+                    placeholder="Auto-imported from Discord or paste image URL"
+                    value={serverIcon}
+                    onChange={(e) => setServerIcon(e.target.value)}
+                  />
+                </div>
+                <small className="modal-hint">
+                  {serverIcon
+                    ? "✓ Logo ready to import! You can also paste another image URL if desired."
+                    : "Automatically populated when selecting a Discord server, or paste any image URL directly."}
+                </small>
               </label>
 
               <label className="modal-label">

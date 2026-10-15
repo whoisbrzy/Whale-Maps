@@ -554,22 +554,29 @@
 .server-card__avatar {
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   background: rgba(47, 107, 255, 0.18);
   color: var(--blue-300);
-  font-size: 0.75rem;
+  font-size: 0.82rem;
   font-weight: 700;
   border: 1px solid rgba(47, 107, 255, 0.3);
   overflow: hidden;
   flex-shrink: 0;
+  position: relative;
 }
 .server-card__avatar-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
+}
+.server-card__avatar-fallback {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
 }
 .server-card__name {
   font-size: 1.05rem;
