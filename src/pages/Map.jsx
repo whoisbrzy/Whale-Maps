@@ -88,6 +88,58 @@ export default function MapPage() {
   const hasCenteredRef = useRef(false);
   const etagRef = useRef(null);
 
+  // Routes: click two points on the map to draw a route; saved per server.
+  const routesKey = `waylo_routes_${serverId || "default"}`;
+  const [routes, setRoutes] = useState([]);
+  const [routesOpen, setRoutesOpen] = useState(false);
+  const [placing, setPlacing] = useState(null); // null | "start" | "end"
+  const [draft, setDraft] = useState(null); // { start: {x, y} }
+  const didPanRef = useRef(false);
+  const downPosRef = useRef(null);
+
+  useEffect(() => {
+    try {
+      setRoutes(JSON.parse(localStorage.getItem(routesKey) || "[]"));
+    } catch {
+      setRoutes([]);
+    }
+    setPlacing(null);
+    setDraft(null);
+  }, [routesKey]);
+
+  const saveRoutes = (list) => {
+    setRoutes(list);
+    try {
+      localStorage.setItem(routesKey, JSON.stringify(list));
+    } catch {}
+  };
+
+  const handleMapClick = (e) => {
+    if (!placing) return;
+    if (didPanRef.current) {
+      didPanRef.current = false;
+      return; // that was a drag, not a click
+    }
+    const img = e.currentTarget.querySelector(".tactical-map-img");
+    if (!img) return;
+    const rect = img.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    if (x < 0 || x > 100 || y < 0 || y > 100) return;
+    const point = { x: Number(x.toFixed(3)), y: Number(y.toFixed(3)) };
+    if (placing === "start") {
+      setDraft({ start: point });
+      setPlacing("end");
+    } else if (draft) {
+      saveRoutes([
+        ...routes,
+        { id: Date.now().toString(36), name: `Route ${routes.length + 1}`, start: draft.start, end: point },
+      ]);
+      setDraft(null);
+      setPlacing(null);
+    }
+  };
+
   const focusUnit = (u) => {
     if (!u) return;
     const targetX = (u.percentX != null ? u.percentX : ((u.x || 0) / 5355) * 100) * 20.48;
@@ -122,6 +174,29 @@ export default function MapPage() {
     const patrolUrl = serverId
       ? `/api/servers/${encodeURIComponent(serverId)}/patrol`
       : "/api/erlc/patrol";
+
+    // Desktop app: the Electron main process polls ER:LC directly from this PC
+    // (no CORS there, no Waylo server in the path, interval 0 — requests fire
+    // back-to-back and ER:LC's own 429 rate limit is the only throttle) and
+    // pushes updates over IPC the moment they land.
+    if (window.wayloDesktop?.isDesktop) {
+      const off = window.wayloDesktop.onPatrol((data) => {
+        if (serverId && data.serverId !== serverId) return;
+        if (data.players) {
+          setActiveUnits(data.players);
+          if (data.players.length > 0 && !hasCenteredRef.current) {
+            hasCenteredRef.current = true;
+            focusUnit(data.players[0]);
+          }
+        }
+        setLoadingUnits(false);
+      });
+      window.wayloDesktop.watch(keyToSend, serverId);
+      return () => {
+        off();
+        window.wayloDesktop.unwatch();
+      };
+    }
 
     const fetchPatrol = () => {
       if (document.hidden) return; // background tab: skip polling entirely
@@ -160,12 +235,16 @@ export default function MapPage() {
 
   const handleMouseDown = (e) => {
     if (e.button !== 0) return;
+    downPosRef.current = { x: e.clientX, y: e.clientY };
+    didPanRef.current = false;
     setIsPanning(true);
     setStartPan({ x: e.clientX - pan.x, y: e.clientY - pan.y });
   };
 
   const handleMouseMove = (e) => {
     if (!isPanning) return;
+    const d = downPosRef.current;
+    if (d && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6) didPanRef.current = true;
     setPan({ x: e.clientX - startPan.x, y: e.clientY - startPan.y });
   };
 
@@ -237,6 +316,46 @@ export default function MapPage() {
         </div>
       </header>
 
+      {/* Routes panel */}
+      <div className="tactical-routes">
+        <button type="button" className="tactical-routes__toggle" onClick={() => setRoutesOpen((v) => !v)}>
+          Routes
+          {routes.length > 0 && <span className="tactical-routes__count">{routes.length}</span>}
+        </button>
+        {routesOpen && (
+          <div className="tactical-routes__panel">
+            {placing ? (
+              <p className="tactical-routes__hint">
+                Click the map to set the {placing} point…
+                <button type="button" className="tactical-routes__cancel" onClick={() => { setPlacing(null); setDraft(null); }}>
+                  Cancel
+                </button>
+              </p>
+            ) : (
+              <button type="button" className="tactical-routes__add" onClick={() => setPlacing("start")}>
+                + New route
+              </button>
+            )}
+            {routes.map((r) => (
+              <div key={r.id} className="tactical-routes__row">
+                <span className="tactical-routes__name">{r.name}</span>
+                <button
+                  type="button"
+                  className="tactical-routes__del"
+                  title="Delete route"
+                  onClick={() => saveRoutes(routes.filter((x) => x.id !== r.id))}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+            {routes.length === 0 && !placing && (
+              <p className="tactical-routes__hint">Click + New route, then click two points on the map.</p>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Map Interactive Canvas */}
       <main
         className="tactical-canvas-wrap"
@@ -245,6 +364,7 @@ export default function MapPage() {
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
         onWheel={handleWheel}
+        onClick={handleMapClick}
       >
         <div
           className="tactical-canvas-layer"
@@ -260,6 +380,37 @@ export default function MapPage() {
             draggable={false}
             loading="eager"
           />
+
+          {/* Saved routes */}
+          <svg
+            className="tactical-routes-svg"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
+            {routes.map((r) => (
+              <g key={r.id}>
+                <line
+                  x1={r.start.x}
+                  y1={r.start.y}
+                  x2={r.end.x}
+                  y2={r.end.y}
+                  className="tactical-route-line"
+                  vectorEffect="non-scaling-stroke"
+                />
+                <circle cx={r.start.x} cy={r.start.y} r="0.45" className="tactical-route-dot" />
+                <circle cx={r.end.x} cy={r.end.y} r="0.45" className="tactical-route-dot" />
+              </g>
+            ))}
+            {draft && (
+              <circle
+                cx={draft.start.x}
+                cy={draft.start.y}
+                r="0.55"
+                className="tactical-route-dot tactical-route-dot--draft"
+              />
+            )}
+          </svg>
 
           {/* Real Active Patrol Units with Roblox Headshots */}
           {activeUnits.map((unit) => {

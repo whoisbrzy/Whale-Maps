@@ -1632,3 +1632,128 @@
   margin-top: var(--space-7);
   font-size: var(--fs-h2);
 }
+
+/* ==========================================================================
+   Routes on the tactical map
+   ========================================================================== */
+.tactical-routes {
+  position: absolute;
+  top: 4.75rem;
+  right: 1rem;
+  z-index: 5;
+}
+.tactical-routes__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  height: 38px;
+  padding: 0 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-pill);
+  background: rgba(10, 12, 18, 0.72);
+  backdrop-filter: blur(14px);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tactical-routes__count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: var(--radius-pill);
+  background: var(--status-route);
+  color: #04121a;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.tactical-routes__panel {
+  margin-top: 8px;
+  min-width: 220px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(10, 12, 18, 0.85);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 18px 44px -18px rgba(0, 0, 0, 0.9);
+}
+.tactical-routes__add {
+  width: 100%;
+  height: 34px;
+  border: 1px dashed rgba(34, 211, 238, 0.5);
+  border-radius: 10px;
+  background: rgba(34, 211, 238, 0.08);
+  color: var(--status-route);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tactical-routes__add:hover {
+  background: rgba(34, 211, 238, 0.16);
+}
+.tactical-routes__hint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-soft);
+  line-height: 1.4;
+}
+.tactical-routes__cancel {
+  display: block;
+  margin-top: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.tactical-routes__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 4px 0;
+}
+.tactical-routes__name {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+.tactical-routes__del {
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.tactical-routes__del:hover {
+  background: var(--status-danger);
+  color: #fff;
+}
+.tactical-routes-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.tactical-route-line {
+  stroke: var(--status-route);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 8 6;
+  opacity: 0.95;
+}
+.tactical-route-dot {
+  fill: var(--status-route);
+}
+.tactical-route-dot--draft {
+  fill: #fff;
+}
