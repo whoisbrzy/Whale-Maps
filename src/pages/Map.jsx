@@ -13,6 +13,81 @@ const MAP_URLS = {
   },
 };
 
+/* Live tracking calls the ER:LC API directly from the user's browser, so player
+   data never crosses our servers. The helpers below mirror what the server-side
+   patrol handler used to do; /api/erlc/map-settings (small, every 30s) only
+   tells this page how to display what it fetched. If a direct call fails (API
+   trouble, CORS change), the page falls back to the server proxy. */
+const DEFAULT_ERLC_KEY = "CptBebykvqrbzMppfjYA-XGAcBUeiXfAZhLYunSESsHjCTKemKffmxtEbxlBp";
+const ERLC_API = "https://api.erlc.gg/v2";
+
+function erlcTeamColor(teamName) {
+  const t = String(teamName || "").toLowerCase();
+  if (t.includes("police")) return "#2563eb";
+  if (t.includes("sheriff")) return "#b45309";
+  if (t.includes("fire") || t.includes("ems") || t.includes("medic")) return "#dc2626";
+  if (t.includes("dot") || t.includes("transport") || t.includes("public work")) return "#f59e0b";
+  return "#64748b";
+}
+
+function mapErlcPlayers(data) {
+  const raw = data?.Players || [];
+  return raw.map((p, idx) => {
+    const parts = String(p.Player || "").split(":");
+    const username = parts[0] || `Player ${idx + 1}`;
+    const playerId = parts[1] || String(idx + 1);
+    const loc = p.Location || {};
+    let px = Number(loc.LocationX) || 0;
+    let py = Number(loc.LocationZ) || 0;
+    if (px < 0 || py < 0) {
+      px = 2677.5 + px;
+      py = 2677.5 + py;
+    }
+    px = Math.max(0, Math.min(5355, Math.round(px)));
+    py = Math.max(0, Math.min(5355, Math.round(py)));
+    return {
+      id: playerId,
+      robloxId: playerId,
+      name: username,
+      robloxUsername: username,
+      robloxAvatar: `https://www.roblox.com/headshot-thumbnail/image?userId=${playerId}&width=150&height=150&format=png`,
+      robloxProfileUrl: playerId ? `https://www.roblox.com/users/${playerId}/profile` : "",
+      team: p.Team || "Civilian",
+      callsign: p.Callsign || "",
+      wantedStars: p.WantedStars || 0,
+      postal: loc.PostalCode || "",
+      street: loc.StreetName || "",
+      building: loc.BuildingNumber || "",
+      x: px,
+      y: py,
+      percentX: Number(((px / 5355) * 100).toFixed(4)),
+      percentY: Number(((py / 5355) * 100).toFixed(4)),
+      color: erlcTeamColor(p.Team),
+    };
+  });
+}
+
+function filterBySettings(units, s) {
+  s = s || {};
+  let out = units;
+  if (s.civilianVisibility === "wanted_only") {
+    out = out.filter((u) => {
+      const isCiv = String(u.team).toLowerCase().includes("civilian");
+      if (isCiv && u.wantedStars === 0) return false;
+      return true;
+    });
+  } else if (s.civilianVisibility === "hide_all") {
+    out = out.filter((u) => !String(u.team).toLowerCase().includes("civilian"));
+  }
+  if (s.leoVisibility === "leo_only") {
+    out = out.filter((u) => {
+      const t = String(u.team).toLowerCase();
+      return t.includes("police") || t.includes("sheriff") || t.includes("fire") || t.includes("ems");
+    });
+  }
+  return out;
+}
+
 export default function MapPage() {
   const [params] = useSearchParams();
   const serverId = params.get("server") || "";
@@ -80,6 +155,7 @@ export default function MapPage() {
 
   const hasCenteredRef = useRef(false);
   const etagRef = useRef(null);
+  const settingsRef = useRef(null);
 
   const focusUnit = (u) => {
     if (!u) return;
@@ -111,13 +187,39 @@ export default function MapPage() {
       } catch {}
     }
 
-    const keyToSend = localKey || "CptBebykvqrbzMppfjYA-XGAcBUeiXfAZhLYunSESsHjCTKemKffmxtEbxlBp";
+    const keyToSend = localKey || DEFAULT_ERLC_KEY;
     const patrolUrl = serverId
       ? `/api/servers/${encodeURIComponent(serverId)}/patrol`
-      : `/api/erlc/patrol`;
+      : "/api/erlc/patrol";
+    const settingsUrl = `/api/erlc/map-settings?serverId=${encodeURIComponent(serverId)}`;
+    let directFailures = 0;
 
-    const fetchPatrol = () => {
-      if (document.hidden) return; // background tab: skip polling entirely
+    const applyUnits = (units) => {
+      const filtered = filterBySettings(units, settingsRef.current);
+      setActiveUnits(filtered);
+      if (filtered.length > 0 && !hasCenteredRef.current) {
+        hasCenteredRef.current = true;
+        focusUnit(filtered[0]);
+      }
+    };
+
+    // Small and rare: display rules only (visibility toggles, season).
+    const refreshSettings = () => {
+      if (document.hidden) return;
+      directFailures = 0; // give the direct path a fresh chance
+      fetch(settingsUrl, { headers: { "x-erlc-key": keyToSend } })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((d) => {
+          if (d?.mapSettings) {
+            settingsRef.current = d.mapSettings;
+            setMapSettings((prev) => ({ ...prev, ...d.mapSettings }));
+          }
+        })
+        .catch(() => {});
+    };
+
+    // Fallback path through our server (used if direct calls fail twice).
+    const fetchViaProxy = () => {
       fetch(patrolUrl, {
         headers: {
           "x-erlc-key": keyToSend,
@@ -131,14 +233,9 @@ export default function MapPage() {
           return res.ok ? res.json() : null;
         })
         .then((data) => {
-          if (data?.players) {
-            setActiveUnits(data.players);
-            if (data.players.length > 0 && !hasCenteredRef.current) {
-              hasCenteredRef.current = true;
-              focusUnit(data.players[0]);
-            }
-          }
+          if (data?.players) applyUnits(data.players);
           if (data?.mapSettings) {
+            settingsRef.current = data.mapSettings;
             setMapSettings((prev) => ({ ...prev, ...data.mapSettings }));
           }
         })
@@ -146,9 +243,34 @@ export default function MapPage() {
         .finally(() => setLoadingUnits(false));
     };
 
-    fetchPatrol();
-    const interval = setInterval(fetchPatrol, 2000);
-    return () => clearInterval(interval);
+    // Preferred path: the user's browser talks to the ER:LC API directly.
+    const fetchDirect = async () => {
+      try {
+        const res = await fetch(`${ERLC_API}/server?Players=true`, {
+          headers: { "server-key": keyToSend },
+        });
+        if (!res.ok) throw new Error(`erlc ${res.status}`);
+        directFailures = 0;
+        applyUnits(mapErlcPlayers(await res.json()));
+        setLoadingUnits(false);
+      } catch {
+        directFailures += 1;
+        fetchViaProxy();
+      }
+    };
+
+    refreshSettings();
+    fetchDirect();
+    const interval = setInterval(() => {
+      if (document.hidden) return; // background tab: skip polling entirely
+      if (directFailures < 2) fetchDirect();
+      else fetchViaProxy();
+    }, 2000);
+    const settingsInterval = setInterval(refreshSettings, 30000);
+    return () => {
+      clearInterval(interval);
+      clearInterval(settingsInterval);
+    };
   }, [serverId]);
 
   const handleMouseDown = (e) => {
