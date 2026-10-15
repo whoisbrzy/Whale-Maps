@@ -270,27 +270,33 @@ export default function MapPage() {
                 style={{
                   left: `${leftPercent}%`,
                   top: `${topPercent}%`,
-                  "--unit-color": unit.color || "#3b82f6",
+                  "--unit-color": "#2f6bff",
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
                   setSelectedUnit(unit);
                 }}
               >
-                <div className="tactical-blip__pulse" />
+                <div
+                  className="tactical-blip__pulse"
+                  style={{
+                    background: "#2f6bff",
+                    boxShadow: "0 0 16px #2f6bff",
+                  }}
+                />
                 <div
                   className="tactical-blip__dot"
                   style={{
-                    width: showAvatar ? "34px" : "16px",
-                    height: showAvatar ? "34px" : "16px",
+                    width: showAvatar ? "36px" : "18px",
+                    height: showAvatar ? "36px" : "18px",
                     borderRadius: "50%",
                     overflow: "hidden",
-                    border: `2px solid ${unit.color || "#3b82f6"}`,
+                    border: "2.5px solid #2f6bff",
                     background: "#0c0e14",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    boxShadow: `0 0 10px ${unit.color || "#3b82f6"}`,
+                    boxShadow: "0 0 14px rgba(47, 107, 255, 0.85), 0 2px 8px rgba(0,0,0,0.8)",
                   }}
                 >
                   {showAvatar ? (
@@ -305,10 +311,16 @@ export default function MapPage() {
                     />
                   ) : null}
                 </div>
-                <div className="tactical-blip__label">
+                <div
+                  className="tactical-blip__label"
+                  style={{
+                    border: "1px solid rgba(47, 107, 255, 0.4)",
+                    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.8)",
+                  }}
+                >
                   {labelText}
                   {mapSettings.showPostalNumbers !== false && unit.postal && (
-                    <span style={{ opacity: 0.85, marginLeft: "0.25rem", color: "var(--blue-300)" }}>
+                    <span style={{ opacity: 0.9, marginLeft: "0.25rem", color: "#60a5fa", fontWeight: 700 }}>
                       #{unit.postal}
                     </span>
                   )}
@@ -322,111 +334,6 @@ export default function MapPage() {
             );
           })}
         </div>
-
-        {/* Selected Unit Tooltip Popover */}
-        {selectedUnit && (
-          <div
-            className="tactical-unit-card"
-            style={{
-              left: Math.min(window.innerWidth - 320, 20),
-              bottom: 80,
-              maxWidth: "300px",
-            }}
-          >
-            <div className="tactical-unit-card__header">
-              <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-                {selectedUnit.robloxAvatar && (
-                  <img
-                    src={selectedUnit.robloxAvatar}
-                    alt={selectedUnit.robloxUsername || selectedUnit.name}
-                    referrerPolicy="no-referrer"
-                    style={{
-                      width: "38px",
-                      height: "38px",
-                      borderRadius: "50%",
-                      border: `2px solid ${selectedUnit.color || "var(--blue-400)"}`,
-                      background: "#161922",
-                      objectFit: "cover",
-                      flexShrink: 0,
-                    }}
-                    onError={(e) => {
-                      e.currentTarget.style.display = "none";
-                    }}
-                  />
-                )}
-                <div>
-                  <strong style={{ display: "block", fontSize: "0.95rem", color: "#fff" }}>
-                    {selectedUnit.callsign || selectedUnit.name}
-                  </strong>
-                  {selectedUnit.callsign && selectedUnit.name && (
-                    <span style={{ fontSize: "0.78rem", color: "var(--text-soft)" }}>
-                      {selectedUnit.name}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <button
-                type="button"
-                className="tactical-unit-card__close"
-                onClick={() => setSelectedUnit(null)}
-              >
-                <IconClose />
-              </button>
-            </div>
-
-            <div style={{ marginTop: "0.6rem" }}>
-              {selectedUnit.team && (
-                <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.3rem" }}>
-                  <span
-                    style={{
-                      fontSize: "0.72rem",
-                      fontWeight: 700,
-                      padding: "0.15rem 0.5rem",
-                      borderRadius: "999px",
-                      background: "rgba(255, 255, 255, 0.08)",
-                      color: selectedUnit.color || "#fff",
-                      border: `1px solid ${selectedUnit.color || "rgba(255, 255, 255, 0.2)"}`,
-                    }}
-                  >
-                    {selectedUnit.team}
-                  </span>
-                  {selectedUnit.wantedStars > 0 && (
-                    <span style={{ color: "#ef4444", fontSize: "0.8rem", fontWeight: 700 }}>
-                      {"★".repeat(selectedUnit.wantedStars)} Wanted
-                    </span>
-                  )}
-                </div>
-              )}
-
-              {selectedUnit.postal && (
-                <p style={{ margin: "0.25rem 0", fontSize: "0.8rem", color: "var(--text-soft)" }}>
-                  Location: <strong style={{ color: "var(--blue-300)" }}>#{selectedUnit.postal}</strong> {selectedUnit.street || ""}
-                </p>
-              )}
-
-              {selectedUnit.robloxProfileUrl && (
-                <a
-                  href={selectedUnit.robloxProfileUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "0.25rem",
-                    color: "var(--blue-400)",
-                    fontSize: "0.78rem",
-                    fontWeight: 600,
-                    textDecoration: "none",
-                    marginTop: "0.4rem",
-                  }}
-                >
-                  View Roblox Profile ↗
-                </a>
-              )}
-            </div>
-          </div>
-        )}
 
         {/* Zoom Controls */}
         <div className="tactical-controls">
