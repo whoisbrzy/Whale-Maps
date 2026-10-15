@@ -13,14 +13,9 @@ export default function Settings() {
       return true;
     }
   });
-  const [soundEnabled, setSoundEnabled] = useState(() => {
-    try {
-      return localStorage.getItem("waylo_pref_sounds") === "true";
-    } catch {
-      return false;
-    }
-  });
   const [saveNotice, setSaveNotice] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const handleCopyId = () => {
     if (!user?.id) return;
@@ -38,13 +33,15 @@ export default function Settings() {
     } catch {}
   };
 
-  const toggleSoundPref = (val) => {
-    setSoundEnabled(val);
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
     try {
-      localStorage.setItem("waylo_pref_sounds", val ? "true" : "false");
-      setSaveNotice("Preferences updated!");
-      setTimeout(() => setSaveNotice(""), 2500);
+      await fetch("/api/account/delete", { method: "POST", credentials: "same-origin" });
     } catch {}
+    try {
+      localStorage.clear();
+    } catch {}
+    window.location.href = "/";
   };
 
   if (!ready) {
@@ -131,24 +128,22 @@ export default function Settings() {
               }}
             />
             <div style={{ flex: 1, minWidth: "200px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                 <h2 style={{ fontSize: "1.3rem", fontWeight: 700, margin: 0, color: "#fff" }}>
                   {user.name}
                 </h2>
-                <span
-                  style={{
-                    background: "rgba(47, 107, 255, 0.2)",
-                    border: "1px solid rgba(47, 107, 255, 0.4)",
-                    color: "var(--blue-300)",
-                    fontSize: "0.72rem",
-                    fontWeight: 700,
-                    padding: "0.15rem 0.5rem",
-                    borderRadius: "999px",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  Verified User
-                </span>
+                <img
+                  src="/badge-verified.png"
+                  alt="Verified"
+                  title="Verified User"
+                  style={{ width: "20px", height: "20px", flexShrink: 0 }}
+                />
+                <img
+                  src="/badge-developer.png"
+                  alt="Developer"
+                  title="Developer"
+                  style={{ width: "20px", height: "20px", flexShrink: 0 }}
+                />
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginTop: "0.4rem", flexWrap: "wrap" }}>
                 <span style={{ fontSize: "0.82rem", color: "var(--text-soft)" }}>
@@ -351,77 +346,89 @@ export default function Settings() {
             </button>
           </div>
 
-          {/* Sound Alerts Toggle */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "0.85rem 0",
-            }}
-          >
-            <div>
-              <strong style={{ display: "block", fontSize: "0.92rem", color: "#fff" }}>Unit Ping & Emergency Sounds</strong>
-              <span style={{ fontSize: "0.8rem", color: "var(--text-soft)" }}>
-                Play a subtle audio tone when new 911 calls or panic button alerts occur on the map.
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => toggleSoundPref(!soundEnabled)}
-              style={{
-                width: "48px",
-                height: "26px",
-                borderRadius: "999px",
-                background: soundEnabled ? "var(--blue-500)" : "rgba(255, 255, 255, 0.15)",
-                border: 0,
-                position: "relative",
-                cursor: "pointer",
-                transition: "background 0.2s ease",
-              }}
-            >
-              <span
-                style={{
-                  position: "absolute",
-                  top: "3px",
-                  left: soundEnabled ? "25px" : "3px",
-                  width: "20px",
-                  height: "20px",
-                  borderRadius: "50%",
-                  background: "#fff",
-                  transition: "left 0.2s ease",
-                }}
-              />
-            </button>
-          </div>
         </div>
 
-        {/* Quick Links & Danger Zone */}
+        {/* Danger Zone */}
         <div
           style={{
             background: "#0c0e14",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
+            border: "1px solid rgba(239, 68, 68, 0.25)",
             borderRadius: "14px",
             padding: "1.5rem",
           }}
         >
-          <h3 style={{ fontSize: "1.05rem", fontWeight: 700, margin: "0 0 1rem", color: "#fff" }}>
-            Account Actions
+          <h3 style={{ fontSize: "1.05rem", fontWeight: 700, margin: "0 0 0.5rem", color: "#ef4444" }}>
+            Danger Zone
           </h3>
+          <p style={{ fontSize: "0.85rem", color: "var(--text-soft)", margin: "0 0 1.25rem" }}>
+            Permanently delete your account, Roblox links, and server data.
+          </p>
+
           <div style={{ display: "flex", gap: "0.85rem", flexWrap: "wrap", alignItems: "center" }}>
-            <Link to="/servers" className="btn btn--ghost btn--small">
-              <IconMap /> My Servers
-            </Link>
             <button
               type="button"
               className="btn btn--ghost btn--small"
               onClick={logout}
-              style={{ color: "#ef4444", borderColor: "rgba(239, 68, 68, 0.3)" }}
             >
               Log Out of Waylo
             </button>
+            <button
+              type="button"
+              className="btn btn--small"
+              onClick={() => setShowDeleteModal(true)}
+              style={{
+                background: "rgba(239, 68, 68, 0.15)",
+                color: "#ef4444",
+                border: "1px solid rgba(239, 68, 68, 0.4)",
+              }}
+            >
+              Delete Account
+            </button>
           </div>
         </div>
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteModal && (
+          <div className="modal-overlay" onClick={() => setShowDeleteModal(false)}>
+            <div
+              className="modal-box"
+              style={{ maxWidth: "440px" }}
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+            >
+              <h2 style={{ fontSize: "1.2rem", fontWeight: 700, color: "#ef4444", margin: "0 0 0.75rem" }}>
+                Delete Account?
+              </h2>
+              <p style={{ fontSize: "0.88rem", color: "var(--text-soft)", lineHeight: 1.5, margin: "0 0 1.5rem" }}>
+                Are you sure you want to permanently delete your Waylo account? This action cannot be undone. All linked accounts, servers you own, and local settings will be erased immediately.
+              </p>
+              <div style={{ display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
+                <button
+                  type="button"
+                  className="btn btn--ghost btn--small"
+                  onClick={() => setShowDeleteModal(false)}
+                  disabled={deleting}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn--small"
+                  onClick={handleDeleteAccount}
+                  disabled={deleting}
+                  style={{
+                    background: "#dc2626",
+                    color: "#fff",
+                    border: 0,
+                  }}
+                >
+                  {deleting ? "Deleting…" : "Permanently Delete Account"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );
