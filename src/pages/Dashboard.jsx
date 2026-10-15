@@ -14,10 +14,13 @@ import {
 export default function Dashboard() {
   const [params] = useSearchParams();
   const serverId = params.get("server") || "";
+  const paramName = params.get("name") || "";
   const { user } = useAuth();
 
-  const [server, setServer] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [server, setServer] = useState(
+    paramName ? { id: serverId, name: paramName } : null
+  );
+  const [loading, setLoading] = useState(!paramName);
   const [activeNav, setActiveNav] = useState("erlc"); // "panel" | "erlc" | "members" | "departments"
   const [apiKey, setApiKey] = useState("");
   const [isEditingKey, setIsEditingKey] = useState(false);
@@ -28,21 +31,42 @@ export default function Dashboard() {
       setLoading(false);
       return;
     }
+
+    // Try finding in localStorage first
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith("waylo_servers_")) {
+          const list = JSON.parse(localStorage.getItem(key) || "[]");
+          const found = list.find((s) => s.id === serverId);
+          if (found) {
+            setServer(found);
+            setLoading(false);
+            return;
+          }
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+
     fetch(`/api/servers`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         const found = data?.servers?.find((s) => s.id === serverId);
         if (found) {
           setServer(found);
-        } else {
-          setServer({ id: serverId, name: serverId.replace(/-/g, " ").toUpperCase() });
+        } else if (!server) {
+          setServer({ id: serverId, name: paramName || "My Server" });
         }
       })
       .catch(() => {
-        setServer({ id: serverId, name: serverId.replace(/-/g, " ").toUpperCase() });
+        if (!server) {
+          setServer({ id: serverId, name: paramName || "My Server" });
+        }
       })
       .finally(() => setLoading(false));
-  }, [serverId]);
+  }, [serverId, paramName]);
 
   const handleSaveKey = async (e) => {
     e.preventDefault();
@@ -93,7 +117,7 @@ export default function Dashboard() {
           </button>
 
           <Link
-            to={`/map?server=${serverId}`}
+            to={`/map?server=${encodeURIComponent(serverId)}${server?.name ? `&name=${encodeURIComponent(server.name)}` : ""}`}
             className="dash-sidebar__item dash-sidebar__item--map"
           >
             <IconMap />
@@ -137,7 +161,10 @@ export default function Dashboard() {
           <div>
             <h1 className="dash-topbar__title">{displayName}</h1>
           </div>
-          <Link to={`/map?server=${serverId}`} className="btn btn--primary btn--small">
+          <Link
+            to={`/map?server=${encodeURIComponent(serverId)}${server?.name ? `&name=${encodeURIComponent(server.name)}` : ""}`}
+            className="btn btn--primary btn--small"
+          >
             <IconMap /> Launch Map <ArrowRight />
           </Link>
         </div>

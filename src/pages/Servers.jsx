@@ -283,13 +283,13 @@ export default function Servers() {
                         {activeMenu === srv.id && (
                           <div className="nav__menu" role="menu">
                             <Link
-                              to={`/map?server=${srv.id}`}
+                              to={`/map?server=${encodeURIComponent(srv.id)}&name=${encodeURIComponent(srv.name || "")}`}
                               className="nav__menu-link"
                             >
                               Open Map
                             </Link>
                             <Link
-                              to={`/dashboard?server=${srv.id}`}
+                              to={`/dashboard?server=${encodeURIComponent(srv.id)}&name=${encodeURIComponent(srv.name || "")}`}
                               className="nav__menu-link"
                             >
                               Server Dashboard
@@ -309,7 +309,7 @@ export default function Servers() {
                   {/* Action links: Dashboard & Map */}
                   <nav className="server-card__actions" aria-label="Server actions">
                     <Link
-                      to={`/dashboard?server=${srv.id}`}
+                      to={`/dashboard?server=${encodeURIComponent(srv.id)}&name=${encodeURIComponent(srv.name || "")}`}
                       className="server-card__link server-card__link--dashboard"
                     >
                       <IconDashboard />
@@ -317,7 +317,7 @@ export default function Servers() {
                     </Link>
 
                     <Link
-                      to={`/map?server=${srv.id}`}
+                      to={`/map?server=${encodeURIComponent(srv.id)}&name=${encodeURIComponent(srv.name || "")}`}
                       className="server-card__link server-card__link--map"
                     >
                       <IconMap />

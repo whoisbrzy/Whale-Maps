@@ -4,14 +4,18 @@ import { LogoMark, IconDashboard, IconClose } from "../components/Icons.jsx";
 
 const MAP_URLS = {
   fall: {
-    blank: "https://api.erlc.gg/maps/fall_blank.png",
-    postals: "https://api.erlc.gg/maps/fall_postals.png",
+    blank: "/maps/fall_blank.png",
+    postals: "/maps/fall_postals.png",
+    remoteBlank: "https://api.erlc.gg/maps/fall_blank.png",
+    remotePostals: "https://api.erlc.gg/maps/fall_postals.png",
   },
 };
 
 export default function MapPage() {
   const [params] = useSearchParams();
   const serverId = params.get("server") || "";
+  const paramName = params.get("name") || "";
+  const [serverName, setServerName] = useState(paramName);
 
   // Map display settings
   const [showPostals, setShowPostals] = useState(true);
@@ -27,6 +31,41 @@ export default function MapPage() {
   const [startPan, setStartPan] = useState({ x: 0, y: 0 });
 
   const mapImgUrl = showPostals ? MAP_URLS.fall.postals : MAP_URLS.fall.blank;
+
+  // Resolve human-readable server name
+  useEffect(() => {
+    if (!serverId) return;
+    if (paramName) {
+      setServerName(paramName);
+      return;
+    }
+
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith("waylo_servers_")) {
+          const list = JSON.parse(localStorage.getItem(key) || "[]");
+          const found = list.find((s) => s.id === serverId);
+          if (found?.name) {
+            setServerName(found.name);
+            return;
+          }
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+
+    fetch("/api/servers")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        const found = data?.servers?.find((s) => s.id === serverId);
+        if (found?.name) {
+          setServerName(found.name);
+        }
+      })
+      .catch(() => {});
+  }, [serverId, paramName]);
 
   // Fetch real units for this server if an API is connected
   useEffect(() => {
@@ -77,10 +116,9 @@ export default function MapPage() {
           <Link to="/servers" className="tactical-glass-hud__brand" title="Back to My Servers">
             <LogoMark />
             <span className="tactical-glass-hud__title">
-              {serverId ? serverId.replace(/-/g, " ").toUpperCase() : "LIBERTY COUNTY"}
+              {serverName ? serverName.toUpperCase() : "LIBERTY COUNTY"}
             </span>
           </Link>
-          <span className="badge badge--live">LIVE MAP</span>
         </div>
 
         {/* Center Controls: Postals Toggle */}
@@ -98,7 +136,10 @@ export default function MapPage() {
         {/* Right Actions */}
         <div className="tactical-glass-hud__actions">
           {serverId && (
-            <Link to={`/dashboard?server=${serverId}`} className="btn btn--ghost btn--small">
+            <Link
+              to={`/dashboard?server=${encodeURIComponent(serverId)}${serverName ? `&name=${encodeURIComponent(serverName)}` : ""}`}
+              className="btn btn--ghost btn--small"
+            >
               <IconDashboard /> Dashboard
             </Link>
           )}
@@ -130,9 +171,18 @@ export default function MapPage() {
           {/* Real ER:LC Fall Map Image */}
           <img
             src={mapImgUrl}
-            alt="Liberty County Map"
+            alt="Liberty County Tactical Map"
             className="tactical-map-img"
             draggable={false}
+            loading="eager"
+            onError={(e) => {
+              if (!e.currentTarget.dataset.fallback) {
+                e.currentTarget.dataset.fallback = "true";
+                e.currentTarget.src = showPostals
+                  ? MAP_URLS.fall.remotePostals
+                  : MAP_URLS.fall.remoteBlank;
+              }
+            }}
           />
 
           {/* Real Active Patrol Units */}
