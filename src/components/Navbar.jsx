@@ -33,6 +33,8 @@ export default function Navbar() {
   const navRef = useRef(null);
   const location = useLocation();
   const { user, logout } = useAuth();
+  const links = user?.developer ? [...LINKS, { to: "/panel", label: "Panel" }] : LINKS;
+  const mobile = user?.developer ? [...MOBILE, { to: "/panel", label: "Panel" }] : MOBILE;
 
   // Tell the CSS how tall the topbar is (page padding and anchor offsets follow it).
   useLayoutEffect(() => {
@@ -88,7 +90,7 @@ export default function Navbar() {
           </Link>
 
           <nav className="nav__links" aria-label="Main">
-            {LINKS.map((l) => (
+            {links.map((l) => (
               <Link key={l.to} to={l.to} className="nav__link">
                 {l.label}
               </Link>
@@ -175,7 +177,7 @@ export default function Navbar() {
 
             {menu === "mobile" && (
               <nav id="nav-menu" className="nav__menu" aria-label="Site">
-                {MOBILE.map((l) => (
+                {mobile.map((l) => (
                   <Link key={l.to} to={l.to} className="nav__menu-link">
                     {l.label}
                   </Link>
