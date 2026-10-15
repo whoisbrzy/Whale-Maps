@@ -1,60 +1,49 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { useAuth } from "../auth.jsx";
-import {
-  LogoMark,
-  IconDashboard,
-  IconCamera,
-  IconUsers,
-  IconClose,
-} from "../components/Icons.jsx";
+import { LogoMark, IconDashboard, IconClose } from "../components/Icons.jsx";
 
-const DEMO_UNITS = [
-  { id: "u1", callsign: "1-ADAM-12", name: "Officer Miller", dept: "police", color: "#3b82f6", status: "10-8 Available", x: 420, y: 280 },
-  { id: "u2", callsign: "2-LINCOLN-4", name: "Deputy Vance", dept: "sheriff", color: "#eab308", status: "10-97 On Scene", x: 680, y: 390 },
-  { id: "u3", callsign: "MEDIC-1", name: "Paramedic Diaz", dept: "ems", color: "#ef4444", status: "10-8 Available", x: 310, y: 520 },
-  { id: "u4", callsign: "DOT-8", name: "Unit Kowalski", dept: "dot", color: "#f97316", status: "10-6 Busy", x: 820, y: 240 },
-  { id: "u5", callsign: "CIV-902", name: "Alex Rover", dept: "civ", color: "#a855f7", status: "Active", x: 550, y: 460 },
-];
-
-const CAMERAS = [
-  { id: "c1", name: "Cam 101 - Main St / Elm", limit: "45 MPH", x: 490, y: 310 },
-  { id: "c2", name: "Cam 104 - Highway 1 North", limit: "65 MPH", x: 740, y: 210 },
-  { id: "c3", name: "Cam 202 - County Line Blvd", limit: "50 MPH", x: 620, y: 480 },
-];
+const MAP_URLS = {
+  fall: {
+    blank: "https://api.erlc.gg/maps/fall_blank.png",
+    postals: "https://api.erlc.gg/maps/fall_postals.png",
+  },
+};
 
 export default function MapPage() {
   const [params] = useSearchParams();
-  const serverId = params.get("server") || "sydney-rp";
-  const { user } = useAuth();
+  const serverId = params.get("server") || "";
 
-  const [units, setUnits] = useState(DEMO_UNITS);
-  const [filterDept, setFilterDept] = useState("all");
-  const [showCameras, setShowCameras] = useState(true);
+  // Map display settings
   const [showPostals, setShowPostals] = useState(true);
+  const [activeUnits, setActiveUnits] = useState([]);
+  const [loadingUnits, setLoadingUnits] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedUnit, setSelectedUnit] = useState(null);
+
+  // Pan & Zoom controls
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const [startPan, setStartPan] = useState({ x: 0, y: 0 });
-  const [drawerOpen, setDrawerOpen] = useState(true);
-  const [search, setSearch] = useState("");
 
-  const containerRef = useRef(null);
+  const mapImgUrl = showPostals ? MAP_URLS.fall.postals : MAP_URLS.fall.blank;
 
-  // Subtle simulated patrol movement for demo mode
+  // Fetch real units for this server if an API is connected
   useEffect(() => {
-    const interval = setInterval(() => {
-      setUnits((prev) =>
-        prev.map((u) => ({
-          ...u,
-          x: Math.max(100, Math.min(1000, u.x + (Math.random() * 8 - 4))),
-          y: Math.max(100, Math.min(700, u.y + (Math.random() * 8 - 4))),
-        }))
-      );
-    }, 2500);
-    return () => clearInterval(interval);
-  }, []);
+    if (!serverId) return;
+    setLoadingUnits(true);
+    fetch(`/api/servers/${encodeURIComponent(serverId)}/patrol`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.players) {
+          setActiveUnits(data.players);
+        }
+      })
+      .catch(() => {
+        setActiveUnits([]);
+      })
+      .finally(() => setLoadingUnits(false));
+  }, [serverId]);
 
   const handleMouseDown = (e) => {
     if (e.button !== 0) return;
@@ -69,119 +58,92 @@ export default function MapPage() {
 
   const handleMouseUp = () => setIsPanning(false);
 
-  const filteredUnits = units.filter((u) => {
-    if (filterDept !== "all" && u.dept !== filterDept) return false;
-    if (search && !u.callsign.toLowerCase().includes(search.toLowerCase()) && !u.name.toLowerCase().includes(search.toLowerCase())) {
-      return false;
-    }
-    return true;
-  });
+  const handleWheel = (e) => {
+    e.preventDefault();
+    const delta = e.deltaY * -0.0015;
+    setZoom((prev) => Math.min(4, Math.max(0.4, prev + delta)));
+  };
+
+  const resetView = () => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  };
 
   return (
     <div className="tactical-map">
-      {/* Floating HUD Bar */}
-      <header className="tactical-hud">
-        <div className="tactical-hud__left">
-          <Link to="/servers" className="tactical-hud__brand" title="Back to Servers">
+      {/* Floating Glass Matte HUD (matches hero & navbar design) */}
+      <header className="tactical-glass-hud">
+        <div className="tactical-glass-hud__brand-wrap">
+          <Link to="/servers" className="tactical-glass-hud__brand" title="Back to My Servers">
             <LogoMark />
-            <span className="tactical-hud__server-name">
-              {serverId.replace("-rp", "").replace("-", " ").toUpperCase()} ROLEPLAY
+            <span className="tactical-glass-hud__title">
+              {serverId ? serverId.replace(/-/g, " ").toUpperCase() : "LIBERTY COUNTY"}
             </span>
           </Link>
-          <span className="badge badge--live">LIVE PATROL</span>
+          <span className="badge badge--live">LIVE MAP</span>
         </div>
 
-        {/* Filter buttons */}
-        <div className="tactical-hud__filters">
-          {["all", "police", "sheriff", "ems", "dot"].map((dept) => (
-            <button
-              key={dept}
-              type="button"
-              className={`tactical-filter${filterDept === dept ? " is-active" : ""}`}
-              onClick={() => setFilterDept(dept)}
-            >
-              {dept.toUpperCase()}
-            </button>
-          ))}
+        {/* Center Controls: Postals Toggle */}
+        <div className="tactical-glass-hud__center">
           <button
             type="button"
-            className={`tactical-filter${showCameras ? " is-active" : ""}`}
-            onClick={() => setShowCameras((c) => !c)}
+            className={`tactical-glass-pill${showPostals ? " is-active" : ""}`}
+            onClick={() => setShowPostals((prev) => !prev)}
+            aria-pressed={showPostals}
           >
-            <IconCamera /> CAMS
+            Postals {showPostals ? "ON" : "OFF"}
           </button>
         </div>
 
-        <div className="tactical-hud__actions">
-          <Link to={`/dashboard?server=${serverId}`} className="btn btn--ghost btn--small">
-            <IconDashboard /> Dashboard
-          </Link>
+        {/* Right Actions */}
+        <div className="tactical-glass-hud__actions">
+          {serverId && (
+            <Link to={`/dashboard?server=${serverId}`} className="btn btn--ghost btn--small">
+              <IconDashboard /> Dashboard
+            </Link>
+          )}
           <button
             type="button"
             className={`btn btn--ghost btn--small${drawerOpen ? " is-active" : ""}`}
             onClick={() => setDrawerOpen((o) => !o)}
           >
-            <IconUsers /> Units ({filteredUnits.length})
+            Units ({activeUnits.length})
           </button>
         </div>
       </header>
 
-      {/* Map Canvas / Workspace */}
+      {/* Map Interactive Canvas */}
       <main
         className="tactical-canvas-wrap"
-        ref={containerRef}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
+        onWheel={handleWheel}
       >
         <div
-          className="tactical-canvas"
+          className="tactical-canvas-layer"
           style={{
             transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
           }}
         >
-          {/* Tactical Grid Background */}
-          <div className="tactical-grid" />
+          {/* Real ER:LC Fall Map Image */}
+          <img
+            src={mapImgUrl}
+            alt="Liberty County Map"
+            className="tactical-map-img"
+            draggable={false}
+          />
 
-          {/* District / Postal Zones */}
-          {showPostals && (
-            <div className="tactical-postals" aria-hidden="true">
-              <span className="tactical-zone" style={{ top: 220, left: 340 }}>
-                DISTRICT 1 · POSTAL 102
-              </span>
-              <span className="tactical-zone" style={{ top: 380, left: 620 }}>
-                LIBERTY HIGHWAY · POSTAL 408
-              </span>
-              <span className="tactical-zone" style={{ top: 560, left: 400 }}>
-                DOWNTOWN PLAZA · POSTAL 205
-              </span>
-            </div>
-          )}
-
-          {/* Speed Cameras */}
-          {showCameras &&
-            CAMERAS.map((cam) => (
-              <div
-                key={cam.id}
-                className="tactical-blip tactical-blip--cam"
-                style={{ left: cam.x, top: cam.y }}
-                title={`${cam.name} (${cam.limit})`}
-              >
-                <div className="tactical-cam-radius" />
-                <IconCamera />
-              </div>
-            ))}
-
-          {/* Active Units */}
-          {filteredUnits.map((unit) => (
+          {/* Real Active Patrol Units */}
+          {activeUnits.map((unit) => (
             <div
-              key={unit.id}
+              key={unit.id || unit.name}
               className={`tactical-blip tactical-blip--unit${selectedUnit?.id === unit.id ? " is-selected" : ""}`}
               style={{
-                left: unit.x,
-                top: unit.y,
-                "--unit-color": unit.color,
+                left: `${unit.x || 0}px`,
+                top: `${unit.y || 0}px`,
+                "--unit-color": unit.color || "#3b82f6",
               }}
               onClick={(e) => {
                 e.stopPropagation();
@@ -190,7 +152,7 @@ export default function MapPage() {
             >
               <div className="tactical-blip__pulse" />
               <div className="tactical-blip__dot" />
-              <div className="tactical-blip__label">{unit.callsign}</div>
+              <div className="tactical-blip__label">{unit.callsign || unit.name}</div>
             </div>
           ))}
         </div>
@@ -200,12 +162,12 @@ export default function MapPage() {
           <div
             className="tactical-unit-card"
             style={{
-              left: Math.min(window.innerWidth - 320, selectedUnit.x * zoom + pan.x + 20),
-              top: Math.min(window.innerHeight - 200, selectedUnit.y * zoom + pan.y - 20),
+              left: Math.min(window.innerWidth - 300, 20),
+              bottom: 80,
             }}
           >
             <div className="tactical-unit-card__header">
-              <strong>{selectedUnit.callsign}</strong>
+              <strong>{selectedUnit.callsign || selectedUnit.name}</strong>
               <button
                 type="button"
                 className="tactical-unit-card__close"
@@ -214,20 +176,17 @@ export default function MapPage() {
                 <IconClose />
               </button>
             </div>
-            <p className="tactical-unit-card__name">{selectedUnit.name}</p>
-            <span className="badge badge--live">{selectedUnit.status}</span>
-            <p className="tactical-unit-card__coords">
-              Coord: X: {Math.round(selectedUnit.x * 2.5)}, Z: {Math.round(selectedUnit.y * 2.5)}
-            </p>
+            {selectedUnit.team && <p className="tactical-unit-card__name">{selectedUnit.team}</p>}
+            {selectedUnit.status && <span className="badge badge--live">{selectedUnit.status}</span>}
           </div>
         )}
 
-        {/* Map View Controls (Zoom) */}
+        {/* Zoom Controls */}
         <div className="tactical-controls">
           <button
             type="button"
             className="tactical-ctrl-btn"
-            onClick={() => setZoom((z) => Math.min(2.5, z + 0.2))}
+            onClick={() => setZoom((z) => Math.min(4, z + 0.3))}
             aria-label="Zoom in"
           >
             +
@@ -235,7 +194,7 @@ export default function MapPage() {
           <button
             type="button"
             className="tactical-ctrl-btn"
-            onClick={() => setZoom((z) => Math.max(0.5, z - 0.2))}
+            onClick={() => setZoom((z) => Math.max(0.4, z - 0.3))}
             aria-label="Zoom out"
           >
             −
@@ -243,57 +202,54 @@ export default function MapPage() {
           <button
             type="button"
             className="tactical-ctrl-btn"
-            onClick={() => {
-              setZoom(1);
-              setPan({ x: 0, y: 0 });
-            }}
-            aria-label="Reset view"
+            onClick={resetView}
+            aria-label="Reset map view"
           >
             ⟲
           </button>
         </div>
       </main>
 
-      {/* Collapsible Active Units Drawer */}
+      {/* Side Units Drawer */}
       {drawerOpen && (
-        <aside className="tactical-drawer" aria-label="Active patrol units">
+        <aside className="tactical-drawer" aria-label="Patrol units roster">
           <div className="tactical-drawer__header">
             <h3>Active Patrol Units</h3>
-            <span className="badge">{filteredUnits.length}</span>
-          </div>
-
-          <div className="tactical-drawer__search">
-            <input
-              type="text"
-              placeholder="Search units or callsigns…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+            <button
+              type="button"
+              className="tactical-drawer__close"
+              onClick={() => setDrawerOpen(false)}
+            >
+              <IconClose />
+            </button>
           </div>
 
           <div className="tactical-drawer__list">
-            {filteredUnits.map((u) => (
-              <div
-                key={u.id}
-                className={`tactical-drawer__item${selectedUnit?.id === u.id ? " is-active" : ""}`}
-                onClick={() => {
-                  setSelectedUnit(u);
-                  setPan({ x: -u.x * zoom + window.innerWidth / 2, y: -u.y * zoom + window.innerHeight / 2 });
-                }}
-              >
-                <div
-                  className="tactical-drawer__indicator"
-                  style={{ background: u.color }}
-                />
-                <div className="tactical-drawer__info">
-                  <div className="tactical-drawer__row">
-                    <strong>{u.callsign}</strong>
-                    <span className="tactical-drawer__status">{u.status}</span>
-                  </div>
-                  <p className="tactical-drawer__name">{u.name}</p>
-                </div>
+            {activeUnits.length === 0 ? (
+              <div className="tactical-drawer__empty">
+                <p>No active units on patrol.</p>
+                <small>Connect your ER:LC server key in Dashboard to stream real-time unit blips.</small>
               </div>
-            ))}
+            ) : (
+              activeUnits.map((u) => (
+                <div
+                  key={u.id || u.name}
+                  className={`tactical-drawer__item${selectedUnit?.id === u.id ? " is-active" : ""}`}
+                  onClick={() => setSelectedUnit(u)}
+                >
+                  <div
+                    className="tactical-drawer__indicator"
+                    style={{ background: u.color || "#3b82f6" }}
+                  />
+                  <div className="tactical-drawer__info">
+                    <div className="tactical-drawer__row">
+                      <strong>{u.callsign || u.name}</strong>
+                      <span className="tactical-drawer__status">{u.team || "Active"}</span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </aside>
       )}

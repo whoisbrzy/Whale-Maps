@@ -10,7 +10,6 @@ import {
   IconList,
   IconDots,
   IconPlus,
-  IconShield,
   IconClose,
   IconUsers,
 } from "../components/Icons.jsx";
@@ -19,83 +18,54 @@ export default function Servers() {
   const { user, ready } = useAuth();
   const [servers, setServers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState("grid"); // "grid" | "list"
+  const [viewMode, setViewMode] = useState("grid");
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newServerName, setNewServerName] = useState("");
-  const [newServerBanner, setNewServerBanner] = useState("");
-  const [newServerKey, setNewServerKey] = useState("");
+  const [serverName, setServerName] = useState("");
+  const [discordServer, setDiscordServer] = useState("");
+  const [erlcApiKey, setErlcApiKey] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [activeMenu, setActiveMenu] = useState(null);
 
-  useEffect(() => {
+  const fetchServers = () => {
     if (!ready || !user) {
       setLoading(false);
       return;
     }
     fetch("/api/servers")
-      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        setServers(data.servers || []);
+        setServers(data?.servers || []);
       })
       .catch(() => {
-        // Fallback default servers
-        setServers([
-          {
-            id: "sydney-rp",
-            name: "Sydney Roleplay",
-            banner: "/hero/slide-1.jpg",
-            players: 0,
-            uniqueWeekly: 7,
-            role: "owner",
-            sparkline: [2, 3, 3, 4, 3, 5, 7],
-            hasBanner: true,
-          },
-          {
-            id: "tennessee-rp",
-            name: "Tennessee State Roleplay",
-            banner: "",
-            players: 0,
-            uniqueWeekly: 14,
-            role: "owner",
-            sparkline: [5, 8, 7, 10, 9, 12, 14],
-            hasBanner: false,
-          },
-          {
-            id: "georgia-rp",
-            name: "Georgia State Roleplay",
-            banner: "",
-            players: 0,
-            uniqueWeekly: 9,
-            role: "owner",
-            sparkline: [3, 4, 6, 5, 8, 7, 9],
-            hasBanner: false,
-          },
-        ]);
+        setServers([]);
       })
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchServers();
   }, [ready, user]);
 
   const handleCreateServer = async (e) => {
     e.preventDefault();
-    if (!newServerName.trim()) return;
+    if (!serverName.trim()) return;
     setSubmitting(true);
     try {
       const res = await fetch("/api/servers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: newServerName.trim(),
-          banner: newServerBanner.trim(),
-          erlcApiKey: newServerKey.trim(),
+          name: serverName.trim(),
+          discordServer: discordServer.trim(),
+          erlcApiKey: erlcApiKey.trim(),
         }),
       });
       if (res.ok) {
-        const d = await res.json();
-        setServers((prev) => [...prev, d.server]);
         setShowAddModal(false);
-        setNewServerName("");
-        setNewServerBanner("");
-        setNewServerKey("");
+        setServerName("");
+        setDiscordServer("");
+        setErlcApiKey("");
+        fetchServers();
       }
     } finally {
       setSubmitting(false);
@@ -147,7 +117,7 @@ export default function Servers() {
               className="btn btn--primary btn--small"
               onClick={() => setShowAddModal(true)}
             >
-              <IconPlus /> Add Server
+              <IconPlus /> Create Server
             </button>
             <div className="servers__view-toggle" role="group" aria-label="View mode">
               <button
@@ -170,145 +140,135 @@ export default function Servers() {
           </div>
         </div>
 
-        {/* Server Cards Grid / List */}
-        <div className={`servers__grid servers__grid--${viewMode}`}>
-          {servers.map((srv) => {
-            const hasBanner = Boolean(srv.banner);
-            return (
-              <article key={srv.id} className="server-card">
-                {hasBanner && (
-                  <div
-                    className="server-card__banner"
-                    style={{ backgroundImage: `url(${srv.banner})` }}
-                  >
-                    <div className="server-card__banner-fade" />
-                  </div>
-                )}
-
-                <div className="server-card__body">
-                  {/* Title row */}
-                  <div className="server-card__top">
-                    <div className="server-card__ident">
-                      <div className="server-card__avatar">
-                        {srv.name.slice(0, 2).toUpperCase()}
-                      </div>
-                      <h2 className="server-card__name">{srv.name}</h2>
+        {/* Empty state when user has no servers */}
+        {servers.length === 0 ? (
+          <div className="servers__empty-box">
+            <div className="servers__empty-icon">
+              <IconDashboard />
+            </div>
+            <h2>No servers linked yet</h2>
+            <p>Create your server to connect ER:LC and launch your live tactical map.</p>
+            <button
+              type="button"
+              className="btn btn--primary"
+              onClick={() => setShowAddModal(true)}
+            >
+              <IconPlus /> Create New Server
+            </button>
+          </div>
+        ) : (
+          <div className={`servers__grid servers__grid--${viewMode}`}>
+            {servers.map((srv) => {
+              const hasBanner = Boolean(srv.banner);
+              return (
+                <article key={srv.id} className="server-card">
+                  {hasBanner && (
+                    <div
+                      className="server-card__banner"
+                      style={{ backgroundImage: `url(${srv.banner})` }}
+                    >
+                      <div className="server-card__banner-fade" />
                     </div>
+                  )}
 
-                    <div className="server-card__meta-icons">
-                      {srv.role === "owner" && (
-                        <span className="server-card__crown" title="Server Owner">
-                          <IconCrown />
-                        </span>
-                      )}
-                      <div className="nav__dd">
-                        <button
-                          type="button"
-                          className="server-card__dots"
-                          aria-label="Server options"
-                          onClick={() =>
-                            setActiveMenu((m) => (m === srv.id ? null : srv.id))
-                          }
-                        >
-                          <IconDots />
-                        </button>
-                        {activeMenu === srv.id && (
-                          <div className="nav__menu" role="menu">
-                            <Link
-                              to={`/map?server=${srv.id}`}
-                              className="nav__menu-link"
-                            >
-                              Open Live Map
-                            </Link>
-                            <Link
-                              to={`/dashboard?server=${srv.id}`}
-                              className="nav__menu-link"
-                            >
-                              Server Dashboard
-                            </Link>
-                          </div>
+                  <div className="server-card__body">
+                    {/* Title row */}
+                    <div className="server-card__top">
+                      <div className="server-card__ident">
+                        <div className="server-card__avatar">
+                          {srv.name.slice(0, 2).toUpperCase()}
+                        </div>
+                        <h2 className="server-card__name">{srv.name}</h2>
+                      </div>
+
+                      <div className="server-card__meta-icons">
+                        {srv.role === "owner" && (
+                          <span className="server-card__crown" title="Server Owner">
+                            <IconCrown />
+                          </span>
                         )}
+                        <div className="nav__dd">
+                          <button
+                            type="button"
+                            className="server-card__dots"
+                            aria-label="Server options"
+                            onClick={() =>
+                              setActiveMenu((m) => (m === srv.id ? null : srv.id))
+                            }
+                          >
+                            <IconDots />
+                          </button>
+                          {activeMenu === srv.id && (
+                            <div className="nav__menu" role="menu">
+                              <Link
+                                to={`/map?server=${srv.id}`}
+                                className="nav__menu-link"
+                              >
+                                Open Map
+                              </Link>
+                              <Link
+                                to={`/dashboard?server=${srv.id}`}
+                                className="nav__menu-link"
+                              >
+                                Server Dashboard
+                              </Link>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Player count */}
-                  <div className="server-card__players">
-                    <IconUsers />
-                    <span>{srv.players} players</span>
-                  </div>
+                    {/* Active players */}
+                    <div className="server-card__players">
+                      <IconUsers />
+                      <span>{srv.players || 0} players</span>
+                    </div>
 
-                  {/* Action links */}
-                  <nav className="server-card__actions" aria-label="Server links">
-                    <Link
-                      to={`/dashboard?server=${srv.id}`}
-                      className="server-card__link server-card__link--dashboard"
-                    >
-                      <IconDashboard />
-                      <span>Dashboard</span>
-                    </Link>
-
-                    <Link
-                      to={`/map?server=${srv.id}`}
-                      className="server-card__link server-card__link--map"
-                    >
-                      <IconMap />
-                      <span>Map</span>
-                    </Link>
-
-                    {srv.role === "owner" && (
+                    {/* Action links: Dashboard & Map */}
+                    <nav className="server-card__actions" aria-label="Server actions">
                       <Link
-                        to={`/dashboard?server=${srv.id}&tab=moderator`}
-                        className="server-card__link server-card__link--moderator"
+                        to={`/dashboard?server=${srv.id}`}
+                        className="server-card__link server-card__link--dashboard"
                       >
-                        <IconShield />
-                        <span>Moderator panel</span>
+                        <IconDashboard />
+                        <span>Dashboard</span>
                       </Link>
-                    )}
-                  </nav>
 
-                  {/* Bottom metrics / sparkline */}
-                  <div className="server-card__bottom">
-                    <p className="server-card__stat">
-                      {srv.uniqueWeekly} unique players this week
-                    </p>
-                    <svg
-                      className="server-card__sparkline"
-                      viewBox="0 0 160 28"
-                      preserveAspectRatio="none"
-                      aria-hidden="true"
-                    >
-                      <polyline
-                        fill="none"
-                        stroke="#f97316"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        points="0,24 25,24 65,24 90,24 110,18 135,16 160,22"
-                      />
-                    </svg>
+                      <Link
+                        to={`/map?server=${srv.id}`}
+                        className="server-card__link server-card__link--map"
+                      >
+                        <IconMap />
+                        <span>Map</span>
+                      </Link>
+                    </nav>
                   </div>
-                </div>
-              </article>
-            );
-          })}
-        </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {/* Add Server Modal */}
+      {/* Create New Server Modal (Exact design from screenshot 1) */}
       {showAddModal && (
         <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
           <div
-            className="modal-box"
+            className="modal-box modal-box--create"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
             aria-labelledby="modal-title"
           >
             <div className="modal-header">
-              <h2 id="modal-title" className="modal-title">
-                Add Server & Department
-              </h2>
+              <div>
+                <h2 id="modal-title" className="modal-title">
+                  Create New Server
+                </h2>
+                <p className="modal-subtitle">
+                  Set up your community, link Discord, and bring your existing logs with you.
+                </p>
+              </div>
               <button
                 type="button"
                 className="modal-close"
@@ -321,39 +281,48 @@ export default function Servers() {
 
             <form onSubmit={handleCreateServer} className="modal-form">
               <label className="modal-label">
-                <span>Server Name</span>
+                <span>
+                  Server Name <strong className="text-danger">*</strong>
+                </span>
                 <input
                   type="text"
-                  className="modal-input"
-                  placeholder="e.g. Sydney Roleplay"
-                  value={newServerName}
-                  onChange={(e) => setNewServerName(e.target.value)}
+                  className="modal-input modal-input--orange-focus"
+                  placeholder="Give your server a unique name"
+                  value={serverName}
+                  onChange={(e) => setServerName(e.target.value)}
                   required
                 />
               </label>
 
               <label className="modal-label">
-                <span>Banner Image URL (optional)</span>
+                <span>Link Your Discord Server <small>(optional)</small></span>
+                <small className="modal-hint">
+                  Don't see your server? Ensure you have administrator permissions in the server you want to link and{" "}
+                  <button type="button" className="text-link-orange" onClick={fetchServers}>
+                    refresh
+                  </button>
+                  .
+                </small>
                 <input
-                  type="url"
+                  type="text"
                   className="modal-input"
-                  placeholder="https://.../banner.jpg"
-                  value={newServerBanner}
-                  onChange={(e) => setNewServerBanner(e.target.value)}
+                  placeholder="Search discord servers"
+                  value={discordServer}
+                  onChange={(e) => setDiscordServer(e.target.value)}
                 />
               </label>
 
               <label className="modal-label">
-                <span>ER:LC Server API Key (optional)</span>
+                <span>ER:LC Server API Key <small>(optional)</small></span>
                 <input
                   type="password"
                   className="modal-input"
-                  placeholder="Paste your server API key"
-                  value={newServerKey}
-                  onChange={(e) => setNewServerKey(e.target.value)}
+                  placeholder="Paste your in-game Server API Key"
+                  value={erlcApiKey}
+                  onChange={(e) => setErlcApiKey(e.target.value)}
                 />
                 <small className="modal-hint">
-                  Found in your private server settings in ER:LC. Keeps your server location map synced.
+                  Found in your private server settings in ER:LC. Enables live map player tracking.
                 </small>
               </label>
 
@@ -367,10 +336,10 @@ export default function Servers() {
                 </button>
                 <button
                   type="submit"
-                  className="btn btn--primary btn--small"
-                  disabled={submitting || !newServerName.trim()}
+                  className="btn btn--orange btn--small"
+                  disabled={submitting || !serverName.trim()}
                 >
-                  {submitting ? "Adding…" : "Add Server"}
+                  {submitting ? "Creating…" : "Create Server"}
                 </button>
               </div>
             </form>

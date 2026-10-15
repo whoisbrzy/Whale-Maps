@@ -1,220 +1,257 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "../auth.jsx";
 import {
   IconDashboard,
   IconMap,
-  IconUsers,
-  IconCamera,
   IconShield,
   IconLink,
+  IconUsers,
+  IconCrown,
   ArrowRight,
 } from "../components/Icons.jsx";
 
 export default function Dashboard() {
   const [params] = useSearchParams();
-  const serverId = params.get("server") || "sydney-rp";
+  const serverId = params.get("server") || "";
   const { user } = useAuth();
 
-  const [activeTab, setActiveTab] = useState("overview");
+  const [server, setServer] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [activeNav, setActiveNav] = useState("erlc"); // "panel" | "erlc" | "members" | "departments"
   const [apiKey, setApiKey] = useState("");
+  const [isEditingKey, setIsEditingKey] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const serverName = serverId
-    .replace("-rp", "")
-    .replace("-", " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase()) + " Roleplay";
+  useEffect(() => {
+    if (!serverId) {
+      setLoading(false);
+      return;
+    }
+    fetch(`/api/servers`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        const found = data?.servers?.find((s) => s.id === serverId);
+        if (found) {
+          setServer(found);
+        } else {
+          setServer({ id: serverId, name: serverId.replace(/-/g, " ").toUpperCase() });
+        }
+      })
+      .catch(() => {
+        setServer({ id: serverId, name: serverId.replace(/-/g, " ").toUpperCase() });
+      })
+      .finally(() => setLoading(false));
+  }, [serverId]);
 
-  const handleSaveKey = (e) => {
+  const handleSaveKey = async (e) => {
     e.preventDefault();
     setSaved(true);
+    setIsEditingKey(false);
     setTimeout(() => setSaved(false), 3000);
   };
 
+  if (loading) {
+    return (
+      <section className="page">
+        <div className="container">
+          <p className="panel__muted">Loading dashboard…</p>
+        </div>
+      </section>
+    );
+  }
+
+  const displayName = server?.name || "Server Dashboard";
+
   return (
-    <section className="page page--servers">
-      <div className="container">
-        {/* Server Top Header */}
-        <div className="dash-hero">
-          <div className="dash-hero__info">
-            <div className="dash-hero__avatar">{serverName.slice(0, 2)}</div>
+    <div className="dash-container">
+      {/* Sidebar matching screenshot 2 */}
+      <aside className="dash-sidebar" aria-label="Dashboard navigation">
+        <div className="dash-sidebar__server">
+          <Link to="/servers" className="dash-sidebar__back">
+            ← All Servers
+          </Link>
+          <div className="dash-sidebar__ident">
+            <div className="dash-sidebar__avatar">
+              {displayName.slice(0, 2).toUpperCase()}
+            </div>
             <div>
-              <div className="dash-hero__title-row">
-                <h1 className="dash-hero__title">{serverName}</h1>
-                <span className="badge badge--live">ONLINE</span>
-              </div>
-              <p className="dash-hero__subtitle">
-                ER:LC Roleplay Community · Waylo Tactical CAD & Map
+              <strong className="dash-sidebar__name">{displayName}</strong>
+            </div>
+          </div>
+        </div>
+
+        <nav className="dash-sidebar__nav">
+          <div className="dash-sidebar__section-title">General</div>
+          <button
+            type="button"
+            className={`dash-sidebar__item${activeNav === "panel" ? " is-active" : ""}`}
+            onClick={() => setActiveNav("panel")}
+          >
+            <IconDashboard />
+            <span>Panel</span>
+          </button>
+
+          <Link
+            to={`/map?server=${serverId}`}
+            className="dash-sidebar__item dash-sidebar__item--map"
+          >
+            <IconMap />
+            <span>Tactical Map</span>
+            <ArrowRight className="dash-sidebar__arrow" />
+          </Link>
+
+          <button
+            type="button"
+            className={`dash-sidebar__item${activeNav === "members" ? " is-active" : ""}`}
+            onClick={() => setActiveNav("members")}
+          >
+            <IconUsers />
+            <span>Members</span>
+          </button>
+
+          <button
+            type="button"
+            className={`dash-sidebar__item${activeNav === "departments" ? " is-active" : ""}`}
+            onClick={() => setActiveNav("departments")}
+          >
+            <IconShield />
+            <span>Departments</span>
+          </button>
+
+          <button
+            type="button"
+            className={`dash-sidebar__item${activeNav === "erlc" ? " is-active" : ""}`}
+            onClick={() => setActiveNav("erlc")}
+          >
+            <IconLink />
+            <span>ER:LC Integration</span>
+          </button>
+        </nav>
+      </aside>
+
+      {/* Main Content Area */}
+      <main className="dash-main">
+        {/* Top bar with Map launch button */}
+        <div className="dash-topbar">
+          <div>
+            <h1 className="dash-topbar__title">{displayName}</h1>
+          </div>
+          <Link to={`/map?server=${serverId}`} className="btn btn--primary btn--small">
+            <IconMap /> Launch Map <ArrowRight />
+          </Link>
+        </div>
+
+        {/* ER:LC Integration View (matches screenshot 3) */}
+        {activeNav === "erlc" && (
+          <div className="dash-view">
+            <div className="dash-view__header">
+              <h2 className="dash-view__title">Server Configuration</h2>
+              <p className="dash-view__subtitle">
+                Configure your ER:LC server connection and view server information
               </p>
             </div>
-          </div>
 
-          <div className="dash-hero__actions">
-            <Link to={`/map?server=${serverId}`} className="btn btn--primary">
-              <IconMap /> Launch Tactical Map <ArrowRight />
-            </Link>
-          </div>
-        </div>
+            <div className="dash-card">
+              <h3 className="dash-card__title">API Configuration</h3>
+              <p className="dash-card__desc">
+                To get started with this integration you need to add your API Key found in-game.
+              </p>
 
-        {/* Dashboard Tabs */}
-        <div className="dash-tabs" role="tablist">
-          <button
-            type="button"
-            className={`dash-tab${activeTab === "overview" ? " is-active" : ""}`}
-            onClick={() => setActiveTab("overview")}
-          >
-            <IconDashboard /> Overview
-          </button>
-          <button
-            type="button"
-            className={`dash-tab${activeTab === "roster" ? " is-active" : ""}`}
-            onClick={() => setActiveTab("roster")}
-          >
-            <IconUsers /> Active Roster
-          </button>
-          <button
-            type="button"
-            className={`dash-tab${activeTab === "settings" ? " is-active" : ""}`}
-            onClick={() => setActiveTab("settings")}
-          >
-            <IconLink /> ER:LC API Key
-          </button>
-        </div>
-
-        {/* Tab: Overview */}
-        {activeTab === "overview" && (
-          <div className="dash-content">
-            <div className="dash-stats">
-              <div className="dash-stat-card">
-                <div className="dash-stat-card__top">
-                  <span className="dash-stat-card__label">Active Units</span>
-                  <IconUsers />
-                </div>
-                <div className="dash-stat-card__val">5</div>
-                <p className="dash-stat-card__sub">Patrol in progress</p>
-              </div>
-
-              <div className="dash-stat-card">
-                <div className="dash-stat-card__top">
-                  <span className="dash-stat-card__label">Speed Cameras</span>
-                  <IconCamera />
-                </div>
-                <div className="dash-stat-card__val">3</div>
-                <p className="dash-stat-card__sub">Active road monitors</p>
-              </div>
-
-              <div className="dash-stat-card">
-                <div className="dash-stat-card__top">
-                  <span className="dash-stat-card__label">ER:LC Status</span>
-                  <IconShield />
-                </div>
-                <div className="dash-stat-card__val" style={{ color: "var(--status-online)" }}>
-                  Connected
-                </div>
-                <p className="dash-stat-card__sub">Syncing player locations</p>
-              </div>
-            </div>
-
-            <div className="dash-panel">
-              <h2 className="dash-panel__title">Quick Actions</h2>
-              <div className="dash-quick-links">
-                <Link to={`/map?server=${serverId}`} className="dash-quick-card">
-                  <div className="dash-quick-card__icon" style={{ color: "#22d3ee" }}>
-                    <IconMap />
+              {isEditingKey ? (
+                <form onSubmit={handleSaveKey} className="modal-form" style={{ maxWidth: 460 }}>
+                  <label className="modal-label">
+                    <span>Server API Key</span>
+                    <input
+                      type="password"
+                      className="modal-input modal-input--orange-focus"
+                      placeholder="Paste your in-game Server API Key"
+                      value={apiKey}
+                      onChange={(e) => setApiKey(e.target.value)}
+                      required
+                    />
+                  </label>
+                  <div className="modal-actions" style={{ justifyContent: "flex-start" }}>
+                    <button type="submit" className="btn btn--orange btn--small">
+                      Save API Key
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn--ghost btn--small"
+                      onClick={() => setIsEditingKey(false)}
+                    >
+                      Cancel
+                    </button>
                   </div>
-                  <div>
-                    <strong>Open Tactical Live Map</strong>
-                    <p>Track patrol vehicles, dispatch calls, and cameras in real-time.</p>
-                  </div>
-                </Link>
-
+                </form>
+              ) : (
                 <button
                   type="button"
-                  className="dash-quick-card"
-                  onClick={() => setActiveTab("settings")}
+                  className="btn btn--orange btn--small"
+                  onClick={() => setIsEditingKey(true)}
                 >
-                  <div className="dash-quick-card__icon" style={{ color: "var(--blue-400)" }}>
-                    <IconLink />
-                  </div>
-                  <div>
-                    <strong>Configure ER:LC Server Key</strong>
-                    <p>Update your server API key to keep member positions synced automatically.</p>
-                  </div>
+                  <IconCrown /> Manage linked servers
                 </button>
-              </div>
+              )}
+
+              {saved && <p className="text-success" style={{ marginTop: "0.75rem" }}>API Key saved successfully!</p>}
+            </div>
+
+            <div className="dash-view__footer-link">
+              <span>Learn more about </span>
+              <a href="#help" className="text-link-orange">
+                Server Configuration →
+              </a>
             </div>
           </div>
         )}
 
-        {/* Tab: Roster */}
-        {activeTab === "roster" && (
-          <div className="dash-panel">
-            <h2 className="dash-panel__title">Active Patrol Roster</h2>
-            <div className="dash-table-wrap">
-              <table className="dash-table">
-                <thead>
-                  <tr>
-                    <th>Callsign</th>
-                    <th>Officer</th>
-                    <th>Department</th>
-                    <th>Status</th>
-                    <th>Last Location</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><strong>1-ADAM-12</strong></td>
-                    <td>Officer Miller</td>
-                    <td>Police Department</td>
-                    <td><span className="badge badge--live">10-8 Available</span></td>
-                    <td>Postal 102 · Main St</td>
-                  </tr>
-                  <tr>
-                    <td><strong>2-LINCOLN-4</strong></td>
-                    <td>Deputy Vance</td>
-                    <td>Sheriff's Office</td>
-                    <td><span className="badge" style={{ color: "#eab308" }}>10-97 On Scene</span></td>
-                    <td>Postal 408 · Hwy 1</td>
-                  </tr>
-                  <tr>
-                    <td><strong>MEDIC-1</strong></td>
-                    <td>Paramedic Diaz</td>
-                    <td>Fire / EMS</td>
-                    <td><span className="badge badge--live">10-8 Available</span></td>
-                    <td>Postal 205 · Downtown</td>
-                  </tr>
-                </tbody>
-              </table>
+        {/* Panel View */}
+        {activeNav === "panel" && (
+          <div className="dash-view">
+            <div className="dash-view__header">
+              <h2 className="dash-view__title">Overview Panel</h2>
+              <p className="dash-view__subtitle">Real-time status for {displayName}</p>
+            </div>
+
+            <div className="dash-card">
+              <h3 className="dash-card__title">Live Tactical Map</h3>
+              <p className="dash-card__desc">
+                View real-time unit positions, postals, and road monitors.
+              </p>
+              <Link to={`/map?server=${serverId}`} className="btn btn--primary btn--small">
+                <IconMap /> Open Map
+              </Link>
             </div>
           </div>
         )}
 
-        {/* Tab: Settings */}
-        {activeTab === "settings" && (
-          <div className="dash-panel">
-            <h2 className="dash-panel__title">ER:LC Server Connection</h2>
-            <p className="dash-panel__desc">
-              Connect your ER:LC private server to automatically broadcast live player positions and status to Waylo's tactical map.
-            </p>
-            <form onSubmit={handleSaveKey} className="modal-form" style={{ maxWidth: 520, marginTop: "1rem" }}>
-              <label className="modal-label">
-                <span>ER:LC Server API Key</span>
-                <input
-                  type="password"
-                  className="modal-input"
-                  placeholder="Paste your server API key here"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  required
-                />
-              </label>
-              <button type="submit" className="btn btn--primary btn--small">
-                {saved ? "Saved Successfully!" : "Save & Verify Connection"}
-              </button>
-            </form>
+        {/* Members View */}
+        {activeNav === "members" && (
+          <div className="dash-view">
+            <div className="dash-view__header">
+              <h2 className="dash-view__title">Members</h2>
+              <p className="dash-view__subtitle">Community members linked to this server.</p>
+            </div>
+            <div className="dash-card">
+              <p className="dash-card__desc">No external members registered yet.</p>
+            </div>
           </div>
         )}
-      </div>
-    </section>
+
+        {/* Departments View */}
+        {activeNav === "departments" && (
+          <div className="dash-view">
+            <div className="dash-view__header">
+              <h2 className="dash-view__title">Departments</h2>
+              <p className="dash-view__subtitle">Police, Sheriff, Fire/EMS, and DOT patrol divisions.</p>
+            </div>
+            <div className="dash-card">
+              <p className="dash-card__desc">Default ER:LC patrol divisions enabled.</p>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
   );
 }
