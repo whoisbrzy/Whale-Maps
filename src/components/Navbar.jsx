@@ -8,6 +8,7 @@ const BANNER_KEY = "waylo-banner-releasing-soon";
 const BANNER_TEXT = "Releasing soon";
 
 const LINKS = [
+  { to: "/servers", label: "Servers" },
   { to: "/#features", label: "Features" },
   { to: "/verify", label: "Verify Roblox" },
 ];
@@ -137,6 +138,9 @@ export default function Navbar() {
                 </button>
                 {menu === "user" && (
                   <div className="nav__menu" role="menu">
+                    <Link to="/servers" className="nav__menu-link" role="menuitem">
+                      My Servers
+                    </Link>
                     <Link to="/verify" className="nav__menu-link" role="menuitem">
                       Verify Roblox
                     </Link>

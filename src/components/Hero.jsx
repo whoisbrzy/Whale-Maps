@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { LogoMark, Wordmark, ArrowRight, ArrowUp, Discord } from "./Icons.jsx";
 import { useAuth } from "../auth.jsx";
 
@@ -70,9 +71,9 @@ export default function Hero() {
         </p>
 
         <div className="hero__cta">
-          <a className="btn btn--primary" href="#map">
+          <Link className="btn btn--primary" to="/servers">
             Get Started <ArrowRight />
-          </a>
+          </Link>
           {!user && (
             <a className="btn btn--ghost" href="/auth/login">
               <Discord /> Connect with Discord
