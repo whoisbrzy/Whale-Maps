@@ -16,9 +16,44 @@ import {
 
 const LOCAL_STORAGE_KEY = "waylo_servers";
 
+function getStoredServers(userId) {
+  try {
+    const keys = [
+      userId ? `${LOCAL_STORAGE_KEY}_${userId}` : null,
+      LOCAL_STORAGE_KEY,
+    ].filter(Boolean);
+
+    for (const key of keys) {
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.filter((s) => s && s.id && s.name);
+        }
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return [];
+}
+
+function saveStoredServers(list, userId) {
+  try {
+    const valid = (list || []).filter((s) => s && s.id && s.name);
+    const jsonStr = JSON.stringify(valid);
+    if (userId) {
+      localStorage.setItem(`${LOCAL_STORAGE_KEY}_${userId}`, jsonStr);
+    }
+    localStorage.setItem(LOCAL_STORAGE_KEY, jsonStr);
+  } catch {
+    /* ignore */
+  }
+}
+
 export default function Servers() {
   const { user, ready } = useAuth();
-  const [servers, setServers] = useState([]);
+  const [servers, setServers] = useState(() => getStoredServers(user?.id));
   const [discordGuilds, setDiscordGuilds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState("grid");
@@ -32,49 +67,44 @@ export default function Servers() {
   const [errorMsg, setErrorMsg] = useState("");
   const [activeMenu, setActiveMenu] = useState(null);
 
-  // Load servers from API + localStorage backup
-  const fetchServers = () => {
-    if (!ready || !user) {
-      setLoading(false);
-      return;
+  // Load servers from localStorage cache + API merge
+  const fetchServers = async () => {
+    const local = getStoredServers(user?.id);
+    if (local.length > 0) {
+      setServers(local);
     }
 
-    // Read local cache first for instant persistence
-    let cached = [];
     try {
-      const stored = localStorage.getItem(`${LOCAL_STORAGE_KEY}_${user.id}`);
-      if (stored) cached = JSON.parse(stored);
-    } catch {
-      /* ignore */
-    }
-
-    fetch("/api/servers")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
+      const res = await fetch("/api/servers", { credentials: "same-origin" });
+      if (res.ok) {
+        const data = await res.json();
         const remote = data?.servers || [];
-        // Merge remote + local cache
         const map = new Map();
-        for (const s of [...cached, ...remote]) {
-          map.set(s.id, s);
+        // Retain local servers so newly created or offline servers are never lost
+        for (const s of local) {
+          if (s?.id && s?.name) map.set(s.id, s);
+        }
+        // Merge remote servers from DB
+        for (const s of remote) {
+          if (s?.id && s?.name) map.set(s.id, s);
         }
         const merged = Array.from(map.values());
-        setServers(merged);
-        try {
-          localStorage.setItem(`${LOCAL_STORAGE_KEY}_${user.id}`, JSON.stringify(merged));
-        } catch {
-          /* ignore */
+        if (merged.length > 0) {
+          setServers(merged);
+          saveStoredServers(merged, user?.id);
         }
-      })
-      .catch(() => {
-        if (cached.length) setServers(cached);
-      })
-      .finally(() => setLoading(false));
+      }
+    } catch {
+      /* offline/network error - local servers remain active */
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Fetch Discord guilds for dropdown
   const fetchGuilds = () => {
     if (!user) return;
-    fetch("/api/discord/guilds")
+    fetch("/api/discord/guilds", { credentials: "same-origin" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data?.guilds) {
@@ -93,61 +123,64 @@ export default function Servers() {
 
   const handleCreateServer = async (e) => {
     e.preventDefault();
-    if (!serverName.trim()) return;
+    const cleanName = serverName.trim();
+    if (!cleanName) return;
     setSubmitting(true);
     setErrorMsg("");
 
     const selectedGuild = discordGuilds.find((g) => g.id === selectedDiscordId);
+    const tempId = `srv-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 
-    const payload = {
-      name: serverName.trim(),
-      discordServerId: selectedDiscordId,
+    const newServer = {
+      id: tempId,
+      name: cleanName,
+      discordServerId: selectedDiscordId || "",
       discordServerName: selectedGuild ? selectedGuild.name : "",
       erlcApiKey: erlcApiKey.trim(),
+      role: "owner",
+      players: 0,
     };
 
+    // 1. Immediately update UI state & persist to localStorage so it is instantly visible
+    setServers((prev) => {
+      const next = [newServer, ...prev.filter((s) => s.id !== newServer.id)];
+      saveStoredServers(next, user?.id);
+      return next;
+    });
+
+    // 2. Reset modal inputs & close dialog
+    setShowAddModal(false);
+    setServerName("");
+    setSelectedDiscordId("");
+    setErlcApiKey("");
+    setSubmitting(false);
+
+    // 3. Persist to server backend asynchronously
     try {
       const res = await fetch("/api/servers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        credentials: "same-origin",
+        body: JSON.stringify({
+          name: newServer.name,
+          discordServerId: newServer.discordServerId,
+          discordServerName: newServer.discordServerName,
+          erlcApiKey: newServer.erlcApiKey,
+        }),
       });
 
-      let created = null;
       if (res.ok) {
         const data = await res.json();
-        created = data.server;
-      } else {
-        // Fallback local save if offline
-        created = {
-          id: `srv-${Date.now().toString(36)}`,
-          name: payload.name,
-          discordServerId: payload.discordServerId,
-          discordServerName: payload.discordServerName,
-          role: "owner",
-          players: 0,
-        };
+        if (data?.server) {
+          setServers((prev) => {
+            const updated = prev.map((s) => (s.id === tempId ? data.server : s));
+            saveStoredServers(updated, user?.id);
+            return updated;
+          });
+        }
       }
-
-      if (created) {
-        setServers((prev) => {
-          const next = [...prev, created];
-          try {
-            localStorage.setItem(`${LOCAL_STORAGE_KEY}_${user.id}`, JSON.stringify(next));
-          } catch {
-            /* ignore */
-          }
-          return next;
-        });
-        setShowAddModal(false);
-        setServerName("");
-        setSelectedDiscordId("");
-        setErlcApiKey("");
-      }
-    } catch {
-      setErrorMsg("Failed to save server. Please try again.");
-    } finally {
-      setSubmitting(false);
+    } catch (err) {
+      console.warn("Server backend persist non-fatal warning (preserved locally):", err);
     }
   };
 
@@ -258,9 +291,9 @@ export default function Servers() {
                   <div className="server-card__top">
                     <div className="server-card__ident">
                       <div className="server-card__avatar">
-                        {srv.name.slice(0, 2).toUpperCase()}
+                        {(srv.name || "Server").slice(0, 2).toUpperCase()}
                       </div>
-                      <h2 className="server-card__name">{srv.name}</h2>
+                      <h2 className="server-card__name">{srv.name || "Server"}</h2>
                     </div>
 
                     <div className="server-card__meta-icons">
