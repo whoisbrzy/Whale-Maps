@@ -65,7 +65,7 @@ export default function Dashboard() {
 
   return (
     <div className="dash-container">
-      {/* Sidebar matching screenshot 2 */}
+      {/* Sidebar with blue theme */}
       <aside className="dash-sidebar" aria-label="Dashboard navigation">
         <div className="dash-sidebar__server">
           <Link to="/servers" className="dash-sidebar__back">
@@ -142,7 +142,7 @@ export default function Dashboard() {
           </Link>
         </div>
 
-        {/* ER:LC Integration View (matches screenshot 3) */}
+        {/* ER:LC Integration View */}
         {activeNav === "erlc" && (
           <div className="dash-view">
             <div className="dash-view__header">
@@ -164,7 +164,7 @@ export default function Dashboard() {
                     <span>Server API Key</span>
                     <input
                       type="password"
-                      className="modal-input modal-input--orange-focus"
+                      className="modal-input modal-input--blue-focus"
                       placeholder="Paste your in-game Server API Key"
                       value={apiKey}
                       onChange={(e) => setApiKey(e.target.value)}
@@ -172,7 +172,7 @@ export default function Dashboard() {
                     />
                   </label>
                   <div className="modal-actions" style={{ justifyContent: "flex-start" }}>
-                    <button type="submit" className="btn btn--orange btn--small">
+                    <button type="submit" className="btn btn--primary btn--small">
                       Save API Key
                     </button>
                     <button
@@ -187,7 +187,7 @@ export default function Dashboard() {
               ) : (
                 <button
                   type="button"
-                  className="btn btn--orange btn--small"
+                  className="btn btn--primary btn--small"
                   onClick={() => setIsEditingKey(true)}
                 >
                   <IconCrown /> Manage linked servers
@@ -199,7 +199,7 @@ export default function Dashboard() {
 
             <div className="dash-view__footer-link">
               <span>Learn more about </span>
-              <a href="#help" className="text-link-orange">
+              <a href="#help" className="text-link-blue">
                 Server Configuration →
               </a>
             </div>

@@ -653,14 +653,6 @@
   background: rgba(34, 211, 238, 0.1);
   color: #67e8f9;
 }
-.server-card__link--moderator {
-  color: #f97316;
-}
-.server-card__link--moderator:hover {
-  background: rgba(249, 115, 22, 0.1);
-  color: #fdba74;
-}
-
 .server-card__bottom {
   display: flex;
   align-items: flex-end;
@@ -799,8 +791,8 @@
   width: 54px;
   height: 54px;
   border-radius: 50%;
-  background: rgba(234, 88, 12, 0.15);
-  color: #ea580c;
+  background: rgba(47, 107, 255, 0.15);
+  color: var(--blue-400);
   margin-bottom: 1rem;
 }
 .servers__empty-icon svg {
@@ -829,32 +821,24 @@
   color: var(--text-soft);
   margin-top: 0.2rem;
 }
-.modal-input--orange-focus:focus {
-  border-color: #ea580c !important;
-  box-shadow: 0 0 0 1px #ea580c;
-}
-.btn--orange {
-  background: #ea580c;
-  color: #fff;
-  font-weight: 600;
-}
-.btn--orange:hover {
-  background: #c2410c;
+.modal-input--blue-focus:focus {
+  border-color: var(--blue-500) !important;
+  box-shadow: 0 0 0 1px var(--blue-500);
 }
 .text-danger {
   color: #ef4444;
 }
-.text-link-orange {
+.text-link-blue {
   background: none;
   border: 0;
   padding: 0;
   font: inherit;
-  color: #ea580c;
+  color: var(--blue-400);
   cursor: pointer;
   text-decoration: underline;
 }
-.text-link-orange:hover {
-  color: #f97316;
+.text-link-blue:hover {
+  color: var(--blue-300);
 }
 .text-success {
   color: #22c55e;
@@ -1201,8 +1185,8 @@
   width: 32px;
   height: 32px;
   border-radius: 6px;
-  background: rgba(234, 88, 12, 0.15);
-  color: #ea580c;
+  background: rgba(47, 107, 255, 0.15);
+  color: var(--blue-400);
   display: grid;
   place-items: center;
   font-weight: 700;
@@ -1225,7 +1209,7 @@
 .dash-sidebar__section-title {
   font-size: 0.75rem;
   font-weight: 700;
-  color: #ea580c;
+  color: var(--blue-400);
   padding: 0.5rem 0.75rem;
   letter-spacing: 0.04em;
 }
@@ -1248,7 +1232,7 @@
 .dash-sidebar__item svg {
   width: 18px;
   height: 18px;
-  color: #ea580c;
+  color: var(--blue-400);
   flex: none;
 }
 .dash-sidebar__item:hover {
@@ -1256,7 +1240,7 @@
   color: #fff;
 }
 .dash-sidebar__item.is-active {
-  background: rgba(234, 88, 12, 0.12);
+  background: rgba(47, 107, 255, 0.15);
   color: #fff;
 }
 .dash-sidebar__item--map {
