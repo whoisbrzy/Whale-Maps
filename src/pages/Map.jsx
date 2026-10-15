@@ -82,34 +82,55 @@ export default function MapPage() {
       .catch(() => {});
   }, [serverId, paramName]);
 
+  const hasCenteredRef = useRef(false);
+
+  const focusUnit = (u) => {
+    if (!u) return;
+    const targetX = (u.percentX != null ? u.percentX : ((u.x || 0) / 5355) * 100) * 20.48;
+    const targetY = (u.percentY != null ? u.percentY : ((u.y || 0) / 5355) * 100) * 20.48;
+    setPan({ x: Math.round(1024 - targetX), y: Math.round(1024 - targetY) });
+    setZoom(1.15);
+    setSelectedUnit(u);
+  };
+
   // Fetch real units for this server with 2s real-time live interval
   useEffect(() => {
-    if (!serverId) return;
     setLoadingUnits(true);
 
     let localKey = "";
-    try {
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (k && k.startsWith("waylo_servers")) {
-          const list = JSON.parse(localStorage.getItem(k) || "[]");
-          const s = list.find((x) => x.id === serverId);
-          if (s?.erlcApiKey) {
-            localKey = s.erlcApiKey;
-            break;
+    if (serverId) {
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith("waylo_servers")) {
+            const list = JSON.parse(localStorage.getItem(k) || "[]");
+            const s = list.find((x) => x.id === serverId);
+            if (s?.erlcApiKey) {
+              localKey = s.erlcApiKey;
+              break;
+            }
           }
         }
-      }
-    } catch {}
+      } catch {}
+    }
+
+    const keyToSend = localKey || "CptBebykvqrbzMppfjYA-XGAcBUeiXfAZhLYunSESsHjCTKemKffmxtEbxlBp";
+    const patrolUrl = serverId
+      ? `/api/servers/${encodeURIComponent(serverId)}/patrol`
+      : `/api/erlc/patrol`;
 
     const fetchPatrol = () => {
-      fetch(`/api/servers/${encodeURIComponent(serverId)}/patrol`, {
-        headers: localKey ? { "x-erlc-key": localKey } : {},
+      fetch(patrolUrl, {
+        headers: { "x-erlc-key": keyToSend },
       })
         .then((res) => (res.ok ? res.json() : null))
         .then((data) => {
           if (data?.players) {
             setActiveUnits(data.players);
+            if (data.players.length > 0 && !hasCenteredRef.current) {
+              hasCenteredRef.current = true;
+              focusUnit(data.players[0]);
+            }
           }
           if (data?.mapSettings) {
             setMapSettings((prev) => ({ ...prev, ...data.mapSettings }));
@@ -161,7 +182,7 @@ export default function MapPage() {
           </Link>
         </div>
 
-        {/* Center Controls: Postals Toggle */}
+        {/* Center Controls: Postals Toggle & Unit Focus */}
         <div className="tactical-glass-hud__center">
           <button
             type="button"
@@ -171,6 +192,16 @@ export default function MapPage() {
           >
             Postals {showPostals ? "ON" : "OFF"}
           </button>
+          {activeUnits.length > 0 && (
+            <button
+              type="button"
+              className="tactical-glass-pill is-active"
+              onClick={() => focusUnit(activeUnits[0])}
+              title="Center on unit"
+            >
+              🎯 Center on {activeUnits[0].robloxUsername || activeUnits[0].name}
+            </button>
+          )}
         </div>
 
         {/* Right Actions */}
@@ -451,7 +482,7 @@ export default function MapPage() {
                 <div
                   key={u.id || u.name}
                   className={`tactical-drawer__item${selectedUnit?.id === u.id ? " is-active" : ""}`}
-                  onClick={() => setSelectedUnit(u)}
+                  onClick={() => focusUnit(u)}
                 >
                   {u.robloxAvatar ? (
                     <img

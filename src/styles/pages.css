@@ -1134,7 +1134,7 @@
   cursor: grabbing;
 }
 .tactical-canvas-layer {
-  position: absolute;
+  position: relative;
   transform-origin: center center;
   transition: transform 0.04s linear;
   line-height: 0;
