@@ -121,7 +121,7 @@ export default function Dashboard() {
             className="dash-sidebar__item dash-sidebar__item--map"
           >
             <IconMap />
-            <span>Tactical Map</span>
+            <span>Map</span>
             <ArrowRight className="dash-sidebar__arrow" />
           </Link>
 
@@ -242,11 +242,14 @@ export default function Dashboard() {
             </div>
 
             <div className="dash-card">
-              <h3 className="dash-card__title">Live Tactical Map</h3>
+              <h3 className="dash-card__title">Map</h3>
               <p className="dash-card__desc">
                 View real-time unit positions, postals, and road monitors.
               </p>
-              <Link to={`/map?server=${serverId}`} className="btn btn--primary btn--small">
+              <Link
+                to={`/map?server=${encodeURIComponent(serverId)}${server?.name ? `&name=${encodeURIComponent(server.name)}` : ""}`}
+                className="btn btn--primary btn--small"
+              >
                 <IconMap /> Open Map
               </Link>
             </div>

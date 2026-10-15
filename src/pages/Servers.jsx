@@ -176,7 +176,7 @@ export default function Servers() {
           <p className="eyebrow">Waylo Patrol</p>
           <h1 className="page__title">My Servers & Departments</h1>
           <p className="page__lead">
-            Connect with Discord to access the tactical map and dashboards for your servers.
+            Connect with Discord to access the map and dashboards for your servers.
           </p>
           <a className="btn btn--primary" href="/auth/login">
             <Discord /> Connect with Discord
@@ -237,7 +237,7 @@ export default function Servers() {
               <IconDashboard />
             </div>
             <h2>No servers linked yet</h2>
-            <p>Create your server to connect ER:LC and launch your live tactical map.</p>
+            <p>Create your server to connect ER:LC and launch your map.</p>
             <button
               type="button"
               className="btn btn--primary"

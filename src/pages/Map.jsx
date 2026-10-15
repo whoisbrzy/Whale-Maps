@@ -171,7 +171,7 @@ export default function MapPage() {
           {/* Real ER:LC Fall Map Image */}
           <img
             src={mapImgUrl}
-            alt="Liberty County Tactical Map"
+            alt="Liberty County Map"
             className="tactical-map-img"
             draggable={false}
             loading="eager"
