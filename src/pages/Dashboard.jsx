@@ -136,15 +136,6 @@ export default function Dashboard() {
 
           <button
             type="button"
-            className={`dash-sidebar__item${activeNav === "departments" ? " is-active" : ""}`}
-            onClick={() => setActiveNav("departments")}
-          >
-            <IconShield />
-            <span>Departments</span>
-          </button>
-
-          <button
-            type="button"
             className={`dash-sidebar__item${activeNav === "erlc" ? " is-active" : ""}`}
             onClick={() => setActiveNav("erlc")}
           >
@@ -265,19 +256,6 @@ export default function Dashboard() {
             </div>
             <div className="dash-card">
               <p className="dash-card__desc">No external members registered yet.</p>
-            </div>
-          </div>
-        )}
-
-        {/* Departments View */}
-        {activeNav === "departments" && (
-          <div className="dash-view">
-            <div className="dash-view__header">
-              <h2 className="dash-view__title">Departments</h2>
-              <p className="dash-view__subtitle">Police, Sheriff, Fire/EMS, and DOT patrol divisions.</p>
-            </div>
-            <div className="dash-card">
-              <p className="dash-card__desc">Default ER:LC patrol divisions enabled.</p>
             </div>
           </div>
         )}

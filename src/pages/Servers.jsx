@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../auth.jsx";
 import {
@@ -63,6 +63,8 @@ export default function Servers() {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState("grid");
   const [showAddModal, setShowAddModal] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
   // Form fields
   const [serverName, setServerName] = useState("");
@@ -71,6 +73,16 @@ export default function Servers() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [activeMenu, setActiveMenu] = useState(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
 
   // Load servers from localStorage cache + API merge
   const fetchServers = async () => {
@@ -215,7 +227,7 @@ export default function Servers() {
       <section className="page page--center">
         <div className="container container--narrow">
           <p className="eyebrow">Waylo Patrol</p>
-          <h1 className="page__title">My Servers & Departments</h1>
+          <h1 className="page__title">My Servers</h1>
           <p className="page__lead">
             Connect with Discord to access the map and dashboards for your servers.
           </p>
@@ -233,9 +245,9 @@ export default function Servers() {
         {/* Header */}
         <div className="servers__header">
           <div>
-            <h1 className="servers__title">My Servers & Departments</h1>
+            <h1 className="servers__title">My Servers</h1>
             <p className="servers__subtitle">
-              Here are the servers and departments that you are a member of.
+              Here are the servers that you are a member of.
             </p>
           </div>
 
@@ -428,27 +440,87 @@ export default function Servers() {
                 </small>
 
                 {discordGuilds.length > 0 ? (
-                  <select
-                    className="modal-input modal-input--blue-focus"
-                    value={selectedDiscordId}
-                    onChange={(e) => handleGuildSelect(e.target.value)}
-                  >
-                    <option value="">-- Select a Discord server --</option>
-                    {discordGuilds.map((g) => (
-                      <option key={g.id} value={g.id}>
-                        {g.name} {g.owner ? "(Owner)" : ""}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="custom-guild-dd" ref={dropdownRef}>
+                    <button
+                      type="button"
+                      className={`custom-guild-dd__trigger${dropdownOpen ? " is-open" : ""}`}
+                      onClick={() => setDropdownOpen((o) => !o)}
+                    >
+                      <span className="custom-guild-dd__selected">
+                        {selectedDiscordId ? (() => {
+                          const sel = discordGuilds.find((g) => g.id === selectedDiscordId);
+                          if (!sel) return <span className="custom-guild-dd__placeholder">Select a server…</span>;
+                          return (
+                            <>
+                              {sel.icon ? (
+                                <img
+                                  className="custom-guild-dd__avatar"
+                                  src={`https://cdn.discordapp.com/icons/${sel.id}/${sel.icon}.webp?size=64`}
+                                  alt=""
+                                />
+                              ) : (
+                                <span className="custom-guild-dd__avatar custom-guild-dd__avatar--fallback">
+                                  {(sel.name || "S").slice(0, 2).toUpperCase()}
+                                </span>
+                              )}
+                              <span className="custom-guild-dd__name">{sel.name}</span>
+                              {sel.owner ? (
+                                <span className="custom-guild-dd__badge custom-guild-dd__badge--owner">Owner</span>
+                              ) : (
+                                <span className="custom-guild-dd__badge custom-guild-dd__badge--admin">Admin</span>
+                              )}
+                            </>
+                          );
+                        })() : (
+                          <>
+                            <span className="custom-guild-dd__avatar custom-guild-dd__avatar--placeholder">
+                              <Discord />
+                            </span>
+                            <span className="custom-guild-dd__placeholder">Select a Discord server…</span>
+                          </>
+                        )}
+                      </span>
+                      <span className={`custom-guild-dd__arrow${dropdownOpen ? " is-open" : ""}`}>▼</span>
+                    </button>
+
+                    {dropdownOpen && (
+                      <div className="custom-guild-dd__menu">
+                        {discordGuilds.map((g) => (
+                          <div
+                            key={g.id}
+                            className={`custom-guild-dd__item${selectedDiscordId === g.id ? " is-selected" : ""}`}
+                            onClick={() => {
+                              handleGuildSelect(g.id);
+                              setDropdownOpen(false);
+                            }}
+                          >
+                            {g.icon ? (
+                              <img
+                                className="custom-guild-dd__avatar"
+                                src={`https://cdn.discordapp.com/icons/${g.id}/${g.icon}.webp?size=64`}
+                                alt=""
+                              />
+                            ) : (
+                              <span className="custom-guild-dd__avatar custom-guild-dd__avatar--fallback">
+                                {(g.name || "S").slice(0, 2).toUpperCase()}
+                              </span>
+                            )}
+                            <span className="custom-guild-dd__item-info">
+                              <span className="custom-guild-dd__item-name">{g.name}</span>
+                            </span>
+                            {g.owner ? (
+                              <span className="custom-guild-dd__badge custom-guild-dd__badge--owner">Owner</span>
+                            ) : (
+                              <span className="custom-guild-dd__badge custom-guild-dd__badge--admin">Admin</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
-                    <input
-                      type="text"
-                      className="modal-input modal-input--blue-focus"
-                      placeholder="Search or enter discord server"
-                      value={selectedDiscordId}
-                      onChange={(e) => setSelectedDiscordId(e.target.value)}
-                    />
+                  <div className="custom-guild-dd__empty-box">
+                    <p>No Discord servers found. Connect your account or refresh to pull your servers.</p>
                     <div style={{ display: "flex", gap: "0.6rem", alignItems: "center" }}>
                       <a
                         href="/auth/login"

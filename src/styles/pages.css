@@ -436,7 +436,7 @@
 }
 
 /* ==========================================================================
-   Servers & Departments Hub
+   Servers Hub
    ========================================================================== */
 .page--servers {
   min-height: 85svh;
@@ -846,8 +846,180 @@
   font-weight: 500;
 }
 
+/* Custom Discord Guild Dropdown */
+.custom-guild-dd {
+  position: relative;
+  width: 100%;
+}
+.custom-guild-dd__trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 0.85rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-sm, 8px);
+  color: #fff;
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all var(--dur, 0.15s) ease;
+  min-height: 46px;
+  text-align: left;
+}
+.custom-guild-dd__trigger:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.custom-guild-dd__trigger.is-open {
+  border-color: var(--blue-500);
+  box-shadow: 0 0 0 1px var(--blue-500);
+}
+.custom-guild-dd__selected {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  overflow: hidden;
+  flex: 1;
+}
+.custom-guild-dd__avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.08);
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fff;
+}
+.custom-guild-dd__avatar--fallback {
+  background: rgba(47, 107, 255, 0.2);
+  border: 1px solid rgba(47, 107, 255, 0.4);
+  color: var(--blue-300);
+}
+.custom-guild-dd__avatar--placeholder {
+  background: rgba(88, 101, 242, 0.15);
+  color: #5865f2;
+}
+.custom-guild-dd__avatar--placeholder svg {
+  width: 16px;
+  height: 16px;
+}
+.custom-guild-dd__avatar--none {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-soft);
+  font-size: 1rem;
+}
+.custom-guild-dd__name {
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.custom-guild-dd__placeholder {
+  color: var(--text-soft);
+  font-size: 0.88rem;
+}
+.custom-guild-dd__badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-pill, 999px);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.custom-guild-dd__badge--owner {
+  background: rgba(47, 107, 255, 0.2);
+  color: var(--blue-300);
+  border: 1px solid rgba(47, 107, 255, 0.4);
+}
+.custom-guild-dd__badge--admin {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-soft);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.custom-guild-dd__arrow {
+  font-size: 0.65rem;
+  color: var(--text-soft);
+  transition: transform 0.2s ease;
+  margin-left: 0.5rem;
+}
+.custom-guild-dd__arrow.is-open {
+  transform: rotate(180deg);
+}
+.custom-guild-dd__menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  max-height: 250px;
+  overflow-y: auto;
+  background: #0d111a;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--radius-sm, 10px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8);
+  z-index: 50;
+  padding: 0.35rem;
+  backdrop-filter: blur(20px);
+}
+.custom-guild-dd__item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.custom-guild-dd__item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+.custom-guild-dd__item.is-selected {
+  background: rgba(47, 107, 255, 0.15);
+  border: 1px solid rgba(47, 107, 255, 0.3);
+}
+.custom-guild-dd__item-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex: 1;
+}
+.custom-guild-dd__item-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.custom-guild-dd__item-desc {
+  font-size: 0.75rem;
+  color: var(--text-soft);
+}
+.custom-guild-dd__empty-box {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+.custom-guild-dd__empty-box p {
+  font-size: 0.82rem;
+  color: var(--text-soft);
+  margin: 0;
+}
+
 /* ==========================================================================
-   Tactical Live Map (/map) with Real ER:LC Fall Map & Liquid Glass HUD
+   Live Map (/map) with Real ER:LC Fall Map & Liquid Glass HUD
    ========================================================================== */
 .tactical-map {
   position: fixed;
