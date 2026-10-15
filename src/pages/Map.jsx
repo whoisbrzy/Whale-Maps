@@ -82,12 +82,30 @@ export default function MapPage() {
       .catch(() => {});
   }, [serverId, paramName]);
 
-  // Fetch real units for this server with 3.5s real-time live interval
+  // Fetch real units for this server with 2s real-time live interval
   useEffect(() => {
     if (!serverId) return;
     setLoadingUnits(true);
+
+    let localKey = "";
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith("waylo_servers")) {
+          const list = JSON.parse(localStorage.getItem(k) || "[]");
+          const s = list.find((x) => x.id === serverId);
+          if (s?.erlcApiKey) {
+            localKey = s.erlcApiKey;
+            break;
+          }
+        }
+      }
+    } catch {}
+
     const fetchPatrol = () => {
-      fetch(`/api/servers/${encodeURIComponent(serverId)}/patrol`)
+      fetch(`/api/servers/${encodeURIComponent(serverId)}/patrol`, {
+        headers: localKey ? { "x-erlc-key": localKey } : {},
+      })
         .then((res) => (res.ok ? res.json() : null))
         .then((data) => {
           if (data?.players) {
@@ -102,7 +120,7 @@ export default function MapPage() {
     };
 
     fetchPatrol();
-    const interval = setInterval(fetchPatrol, 3500);
+    const interval = setInterval(fetchPatrol, 2000);
     return () => clearInterval(interval);
   }, [serverId]);
 
@@ -157,32 +175,6 @@ export default function MapPage() {
 
         {/* Right Actions */}
         <div className="tactical-glass-hud__actions">
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "0.35rem",
-              fontSize: "0.72rem",
-              fontWeight: 700,
-              color: "#4ade80",
-              background: "rgba(74, 222, 128, 0.12)",
-              padding: "0.22rem 0.55rem",
-              borderRadius: "999px",
-              border: "1px solid rgba(74, 222, 128, 0.25)",
-            }}
-          >
-            <span
-              style={{
-                width: "7px",
-                height: "7px",
-                borderRadius: "50%",
-                background: "#4ade80",
-                boxShadow: "0 0 6px #4ade80",
-              }}
-            />
-            LIVE (3s)
-          </div>
-
           {serverId && (
             <Link
               to={`/dashboard?server=${encodeURIComponent(serverId)}${serverName ? `&name=${encodeURIComponent(serverName)}` : ""}&tab=overview`}
@@ -237,14 +229,16 @@ export default function MapPage() {
           {activeUnits.map((unit) => {
             const showAvatar = mapSettings.showAvatarsOnBlips !== false && Boolean(unit.robloxAvatar);
             const labelText = mapSettings.showCallsigns !== false ? (unit.callsign || unit.name) : unit.name;
+            const leftPercent = unit.percentX != null ? unit.percentX : ((unit.x || 0) / 5355) * 100;
+            const topPercent = unit.percentY != null ? unit.percentY : ((unit.y || 0) / 5355) * 100;
 
             return (
               <div
                 key={unit.id || unit.name}
                 className={`tactical-blip tactical-blip--unit${selectedUnit?.id === unit.id ? " is-selected" : ""}`}
                 style={{
-                  left: `${unit.x || 0}px`,
-                  top: `${unit.y || 0}px`,
+                  left: `${leftPercent}%`,
+                  top: `${topPercent}%`,
                   "--unit-color": unit.color || "#3b82f6",
                 }}
                 onClick={(e) => {
@@ -256,26 +250,26 @@ export default function MapPage() {
                 <div
                   className="tactical-blip__dot"
                   style={{
-                    width: showAvatar ? "28px" : "14px",
-                    height: showAvatar ? "28px" : "14px",
+                    width: showAvatar ? "34px" : "16px",
+                    height: showAvatar ? "34px" : "16px",
                     borderRadius: "50%",
                     overflow: "hidden",
                     border: `2px solid ${unit.color || "#3b82f6"}`,
                     background: "#0c0e14",
-                    display: "grid",
-                    placeItems: "center",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                     boxShadow: `0 0 10px ${unit.color || "#3b82f6"}`,
-                    transform: "translate(-50%, -50%)",
                   }}
                 >
                   {showAvatar ? (
                     <img
                       src={unit.robloxAvatar}
-                      alt=""
+                      alt={unit.robloxUsername || unit.name}
                       referrerPolicy="no-referrer"
                       style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                       onError={(e) => {
-                        e.currentTarget.style.display = "none";
+                        e.currentTarget.src = `https://www.roblox.com/headshot-thumbnail/image?userId=${unit.robloxId || 1}&width=150&height=150&format=png`;
                       }}
                     />
                   ) : null}

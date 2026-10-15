@@ -130,7 +130,7 @@ export default function Dashboard() {
       if (autoSync) {
         const interval = setInterval(() => {
           fetchErlcStatus();
-        }, 3500);
+        }, 2000);
         return () => clearInterval(interval);
       }
     }
@@ -433,7 +433,7 @@ export default function Dashboard() {
                   className={`btn btn--small ${autoSync ? "btn--primary" : "btn--ghost"}`}
                   onClick={() => setAutoSync((v) => !v)}
                   style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", height: "32px", fontSize: "0.78rem" }}
-                  title="Toggle live 3.5s real-time sync"
+                  title="Toggle live 2s real-time sync"
                 >
                   <span
                     style={{
@@ -444,7 +444,7 @@ export default function Dashboard() {
                       boxShadow: autoSync ? "0 0 8px #4ade80" : "none",
                     }}
                   />
-                  {autoSync ? "Live Streaming (3s)" : "Stream Paused"}
+                  {autoSync ? "Live Streaming (2s)" : "Stream Paused"}
                 </button>
                 <button
                   type="button"

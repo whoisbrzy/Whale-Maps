@@ -1137,11 +1137,15 @@
   position: absolute;
   transform-origin: center center;
   transition: transform 0.04s linear;
+  line-height: 0;
+  width: 2048px;
+  height: 2048px;
 }
 .tactical-map-img {
+  display: block;
   max-width: none;
   width: 2048px;
-  height: auto;
+  height: 2048px;
   border-radius: 8px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
   pointer-events: none;
@@ -1152,6 +1156,7 @@
   transform: translate(-50%, -50%);
   cursor: pointer;
   z-index: 10;
+  line-height: 1.2;
 }
 .tactical-blip--unit {
   display: flex;
@@ -1159,26 +1164,36 @@
   align-items: center;
 }
 .tactical-blip__dot {
-  width: 14px;
-  height: 14px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  background: var(--unit-color, #3b82f6);
-  border: 2px solid #fff;
+  background: #0c0e14;
+  border: 2px solid var(--unit-color, #3b82f6);
   box-shadow: 0 0 12px var(--unit-color, #3b82f6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  z-index: 2;
 }
 .tactical-blip__pulse {
   position: absolute;
-  width: 32px;
-  height: 32px;
-  top: -9px;
+  width: 48px;
+  height: 48px;
+  top: -7px;
+  left: 50%;
+  transform: translateX(-50%);
   border-radius: 50%;
   background: var(--unit-color, #3b82f6);
   opacity: 0.3;
   animation: blipPulse 2s infinite ease-out;
+  pointer-events: none;
+  z-index: 1;
 }
 @keyframes blipPulse {
-  0% { transform: scale(0.4); opacity: 0.7; }
-  100% { transform: scale(1.6); opacity: 0; }
+  0% { transform: translateX(-50%) scale(0.6); opacity: 0.7; }
+  100% { transform: translateX(-50%) scale(1.6); opacity: 0; }
 }
 .tactical-blip__label {
   margin-top: 4px;
