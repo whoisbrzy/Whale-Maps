@@ -86,7 +86,7 @@ async function serveStatic(req, res, pathname) {
     "Cache-Control":
       ext === ".html"
         ? "no-cache"
-        : rel.startsWith("/assets/")
+        : rel.startsWith("/assets/") || rel.startsWith("/maps/")
           ? "public, max-age=31536000, immutable"
           : "public, max-age=86400",
     ETag: f.etag,

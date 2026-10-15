@@ -4,16 +4,12 @@ import { LogoMark, IconDashboard, IconClose } from "../components/Icons.jsx";
 
 const MAP_URLS = {
   fall: {
-    blank: "/maps/fall_blank.png",
-    postals: "/maps/fall_postals.png",
-    remoteBlank: "https://api.erlc.gg/maps/fall_blank.png",
-    remotePostals: "https://api.erlc.gg/maps/fall_postals.png",
+    blank: "/maps/fall_blank.webp",
+    postals: "/maps/fall_postals.webp",
   },
   snow: {
-    blank: "/maps/snow_blank.png",
-    postals: "/maps/snow_postals.png",
-    remoteBlank: "https://api.erlc.gg/maps/snow_blank.png",
-    remotePostals: "https://api.erlc.gg/maps/snow_postals.png",
+    blank: "/maps/snow_blank.webp",
+    postals: "/maps/snow_postals.webp",
   },
 };
 
@@ -83,6 +79,7 @@ export default function MapPage() {
   }, [serverId, paramName]);
 
   const hasCenteredRef = useRef(false);
+  const etagRef = useRef(null);
 
   const focusUnit = (u) => {
     if (!u) return;
@@ -120,10 +117,19 @@ export default function MapPage() {
       : `/api/erlc/patrol`;
 
     const fetchPatrol = () => {
+      if (document.hidden) return; // background tab: skip polling entirely
       fetch(patrolUrl, {
-        headers: { "x-erlc-key": keyToSend },
+        headers: {
+          "x-erlc-key": keyToSend,
+          ...(etagRef.current ? { "If-None-Match": etagRef.current } : {}),
+        },
       })
-        .then((res) => (res.ok ? res.json() : null))
+        .then((res) => {
+          if (res.status === 304) return null; // nothing changed since the last poll
+          const etag = res.headers.get("etag");
+          if (etag) etagRef.current = etag;
+          return res.ok ? res.json() : null;
+        })
         .then((data) => {
           if (data?.players) {
             setActiveUnits(data.players);
@@ -246,14 +252,6 @@ export default function MapPage() {
             className="tactical-map-img"
             draggable={false}
             loading="eager"
-            onError={(e) => {
-              if (!e.currentTarget.dataset.fallback) {
-                e.currentTarget.dataset.fallback = "true";
-                e.currentTarget.src = showPostals
-                  ? seasonUrls.remotePostals
-                  : seasonUrls.remoteBlank;
-              }
-            }}
           />
 
           {/* Real Active Patrol Units with Roblox Headshots */}
