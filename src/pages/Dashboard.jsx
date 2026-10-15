@@ -97,7 +97,18 @@ export default function Dashboard() {
           </Link>
           <div className="dash-sidebar__ident">
             <div className="dash-sidebar__avatar">
-              {displayName.slice(0, 2).toUpperCase()}
+              {server?.icon ? (
+                <img
+                  src={server.icon}
+                  alt=""
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
+              ) : (
+                displayName.slice(0, 2).toUpperCase()
+              )}
             </div>
             <div>
               <strong className="dash-sidebar__name">{displayName}</strong>

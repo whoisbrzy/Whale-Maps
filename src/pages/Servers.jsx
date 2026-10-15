@@ -43,6 +43,14 @@ function getStoredServers() {
   return Array.from(map.values());
 }
 
+function getGuildIconUrl(guild) {
+  if (!guild || !guild.icon) return null;
+  if (typeof guild.icon === "string" && (guild.icon.startsWith("http://") || guild.icon.startsWith("https://"))) {
+    return guild.icon;
+  }
+  return `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png?size=128`;
+}
+
 function saveStoredServers(list, userId) {
   try {
     const valid = (list || []).filter((s) => s && s.id && s.name);
@@ -73,6 +81,8 @@ export default function Servers() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [activeMenu, setActiveMenu] = useState(null);
+
+  const ownedGuilds = discordGuilds.filter((g) => Boolean(g.owner));
 
   useEffect(() => {
     const handleOutsideClick = (e) => {
@@ -125,7 +135,7 @@ export default function Servers() {
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data?.guilds && data.guilds.length > 0) {
-          setDiscordGuilds(data.guilds);
+          setDiscordGuilds(data.guilds.filter((g) => Boolean(g.owner)));
         }
       })
       .catch(() => {
@@ -140,7 +150,7 @@ export default function Servers() {
 
   const handleCreateServer = async (e) => {
     e.preventDefault();
-    const selectedGuild = discordGuilds.find((g) => g.id === selectedDiscordId);
+    const selectedGuild = ownedGuilds.find((g) => g.id === selectedDiscordId);
     const cleanName = (serverName.trim() || selectedGuild?.name || selectedDiscordId.trim() || "").trim();
     if (!cleanName) {
       setErrorMsg("Please enter a server name or select a Discord server.");
@@ -150,12 +160,14 @@ export default function Servers() {
     setErrorMsg("");
 
     const tempId = `srv-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+    const importedLogo = selectedGuild ? getGuildIconUrl(selectedGuild) : "";
 
     const newServer = {
       id: tempId,
       name: cleanName,
       discordServerId: selectedDiscordId || "",
       discordServerName: selectedGuild ? selectedGuild.name : (cleanName || ""),
+      icon: importedLogo || "",
       erlcApiKey: erlcApiKey.trim(),
       role: "owner",
       players: 0,
@@ -185,6 +197,7 @@ export default function Servers() {
           name: newServer.name,
           discordServerId: newServer.discordServerId,
           discordServerName: newServer.discordServerName,
+          icon: newServer.icon,
           erlcApiKey: newServer.erlcApiKey,
         }),
       });
@@ -193,7 +206,7 @@ export default function Servers() {
         const data = await res.json();
         if (data?.server) {
           setServers((prev) => {
-            const updated = prev.map((s) => (s.id === tempId ? data.server : s));
+            const updated = prev.map((s) => (s.id === tempId ? { ...s, ...data.server } : s));
             saveStoredServers(updated, user?.id);
             return updated;
           });
@@ -206,7 +219,7 @@ export default function Servers() {
 
   const handleGuildSelect = (guildId) => {
     setSelectedDiscordId(guildId);
-    const g = discordGuilds.find((item) => item.id === guildId);
+    const g = ownedGuilds.find((item) => item.id === guildId);
     if (g) {
       setServerName(g.name);
     }
@@ -304,19 +317,34 @@ export default function Servers() {
           </div>
         ) : (
           <div className={`servers__grid servers__grid--${viewMode}`}>
-            {servers.map((srv) => (
-              <article key={srv.id} className="server-card">
-                <div className="server-card__body">
-                  {/* Title row */}
-                  <div className="server-card__top">
-                    <div className="server-card__ident">
-                      <div className="server-card__avatar">
-                        {(srv.name || "Server").slice(0, 2).toUpperCase()}
-                      </div>
-                      <h2 className="server-card__name">{srv.name || "Server"}</h2>
-                    </div>
+            {servers.map((srv) => {
+              const matchedGuild = ownedGuilds.find((g) => g.id === srv.discordServerId);
+              const serverLogo = srv.icon || (matchedGuild ? getGuildIconUrl(matchedGuild) : "");
 
-                    <div className="server-card__meta-icons">
+              return (
+                <article key={srv.id} className="server-card">
+                  <div className="server-card__body">
+                    {/* Title row */}
+                    <div className="server-card__top">
+                      <div className="server-card__ident">
+                        <div className="server-card__avatar">
+                          {serverLogo ? (
+                            <img
+                              src={serverLogo}
+                              alt=""
+                              className="server-card__avatar-img"
+                              onError={(e) => {
+                                e.currentTarget.style.display = "none";
+                              }}
+                            />
+                          ) : (
+                            (srv.name || "Server").slice(0, 2).toUpperCase()
+                          )}
+                        </div>
+                        <h2 className="server-card__name">{srv.name || "Server"}</h2>
+                      </div>
+
+                      <div className="server-card__meta-icons">
                       {srv.role === "owner" && (
                         <span className="server-card__crown" title="Server Owner">
                           <IconCrown />
@@ -379,7 +407,8 @@ export default function Servers() {
                   </nav>
                 </div>
               </article>
-            ))}
+            );
+          })}
           </div>
         )}
       </div>
@@ -432,14 +461,14 @@ export default function Servers() {
               <label className="modal-label">
                 <span>Link Your Discord Server <small>(optional)</small></span>
                 <small className="modal-hint">
-                  Don't see your server? Ensure you have administrator permissions in the server you want to link and{" "}
+                  Don't see your server? Ensure you are the owner of the Discord server and{" "}
                   <button type="button" className="text-link-blue" onClick={fetchGuilds}>
                     refresh
                   </button>
                   .
                 </small>
 
-                {discordGuilds.length > 0 ? (
+                {ownedGuilds.length > 0 ? (
                   <div className="custom-guild-dd" ref={dropdownRef}>
                     <button
                       type="button"
@@ -448,15 +477,19 @@ export default function Servers() {
                     >
                       <span className="custom-guild-dd__selected">
                         {selectedDiscordId ? (() => {
-                          const sel = discordGuilds.find((g) => g.id === selectedDiscordId);
+                          const sel = ownedGuilds.find((g) => g.id === selectedDiscordId);
                           if (!sel) return <span className="custom-guild-dd__placeholder">Select a server…</span>;
+                          const iconUrl = getGuildIconUrl(sel);
                           return (
                             <>
-                              {sel.icon ? (
+                              {iconUrl ? (
                                 <img
                                   className="custom-guild-dd__avatar"
-                                  src={`https://cdn.discordapp.com/icons/${sel.id}/${sel.icon}.webp?size=64`}
+                                  src={iconUrl}
                                   alt=""
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = "none";
+                                  }}
                                 />
                               ) : (
                                 <span className="custom-guild-dd__avatar custom-guild-dd__avatar--fallback">
@@ -464,11 +497,7 @@ export default function Servers() {
                                 </span>
                               )}
                               <span className="custom-guild-dd__name">{sel.name}</span>
-                              {sel.owner ? (
-                                <span className="custom-guild-dd__badge custom-guild-dd__badge--owner">Owner</span>
-                              ) : (
-                                <span className="custom-guild-dd__badge custom-guild-dd__badge--admin">Admin</span>
-                              )}
+                              <span className="custom-guild-dd__badge custom-guild-dd__badge--owner">Owner</span>
                             </>
                           );
                         })() : (
@@ -476,7 +505,7 @@ export default function Servers() {
                             <span className="custom-guild-dd__avatar custom-guild-dd__avatar--placeholder">
                               <Discord />
                             </span>
-                            <span className="custom-guild-dd__placeholder">Select a Discord server…</span>
+                            <span className="custom-guild-dd__placeholder">Select a Discord server you own…</span>
                           </>
                         )}
                       </span>
@@ -485,42 +514,44 @@ export default function Servers() {
 
                     {dropdownOpen && (
                       <div className="custom-guild-dd__menu">
-                        {discordGuilds.map((g) => (
-                          <div
-                            key={g.id}
-                            className={`custom-guild-dd__item${selectedDiscordId === g.id ? " is-selected" : ""}`}
-                            onClick={() => {
-                              handleGuildSelect(g.id);
-                              setDropdownOpen(false);
-                            }}
-                          >
-                            {g.icon ? (
-                              <img
-                                className="custom-guild-dd__avatar"
-                                src={`https://cdn.discordapp.com/icons/${g.id}/${g.icon}.webp?size=64`}
-                                alt=""
-                              />
-                            ) : (
-                              <span className="custom-guild-dd__avatar custom-guild-dd__avatar--fallback">
-                                {(g.name || "S").slice(0, 2).toUpperCase()}
+                        {ownedGuilds.map((g) => {
+                          const iconUrl = getGuildIconUrl(g);
+                          return (
+                            <div
+                              key={g.id}
+                              className={`custom-guild-dd__item${selectedDiscordId === g.id ? " is-selected" : ""}`}
+                              onClick={() => {
+                                handleGuildSelect(g.id);
+                                setDropdownOpen(false);
+                              }}
+                            >
+                              {iconUrl ? (
+                                <img
+                                  className="custom-guild-dd__avatar"
+                                  src={iconUrl}
+                                  alt=""
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = "none";
+                                  }}
+                                />
+                              ) : (
+                                <span className="custom-guild-dd__avatar custom-guild-dd__avatar--fallback">
+                                  {(g.name || "S").slice(0, 2).toUpperCase()}
+                                </span>
+                              )}
+                              <span className="custom-guild-dd__item-info">
+                                <span className="custom-guild-dd__item-name">{g.name}</span>
                               </span>
-                            )}
-                            <span className="custom-guild-dd__item-info">
-                              <span className="custom-guild-dd__item-name">{g.name}</span>
-                            </span>
-                            {g.owner ? (
                               <span className="custom-guild-dd__badge custom-guild-dd__badge--owner">Owner</span>
-                            ) : (
-                              <span className="custom-guild-dd__badge custom-guild-dd__badge--admin">Admin</span>
-                            )}
-                          </div>
-                        ))}
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
                 ) : (
                   <div className="custom-guild-dd__empty-box">
-                    <p>No Discord servers found. Connect your account or refresh to pull your servers.</p>
+                    <p>No owned Discord servers found. Make sure you own the server on Discord and refresh.</p>
                     <div style={{ display: "flex", gap: "0.6rem", alignItems: "center" }}>
                       <a
                         href="/auth/login"
