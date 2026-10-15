@@ -178,11 +178,12 @@
   right: 0;
   min-width: 210px;
   padding: var(--space-2);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
-  background: rgba(10, 12, 18, 0.96);
-  backdrop-filter: blur(14px);
-  box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.8);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.6);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.6);
+  box-shadow: var(--glass-shadow), var(--glass-inset-shadow);
 }
 .nav__menu-link {
   display: block;
