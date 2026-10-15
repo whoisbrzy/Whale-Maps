@@ -9,6 +9,12 @@ const MAP_URLS = {
     remoteBlank: "https://api.erlc.gg/maps/fall_blank.png",
     remotePostals: "https://api.erlc.gg/maps/fall_postals.png",
   },
+  snow: {
+    blank: "/maps/snow_blank.png",
+    postals: "/maps/snow_postals.png",
+    remoteBlank: "https://api.erlc.gg/maps/snow_blank.png",
+    remotePostals: "https://api.erlc.gg/maps/snow_postals.png",
+  },
 };
 
 export default function MapPage() {
@@ -23,6 +29,13 @@ export default function MapPage() {
   const [loadingUnits, setLoadingUnits] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedUnit, setSelectedUnit] = useState(null);
+  const [mapSettings, setMapSettings] = useState({
+    showAvatarsOnBlips: true,
+    showCallsigns: true,
+    showPostalNumbers: true,
+    showWantedStars: true,
+    mapSeason: "fall",
+  });
 
   // Pan & Zoom controls
   const [zoom, setZoom] = useState(1);
@@ -30,7 +43,9 @@ export default function MapPage() {
   const [isPanning, setIsPanning] = useState(false);
   const [startPan, setStartPan] = useState({ x: 0, y: 0 });
 
-  const mapImgUrl = showPostals ? MAP_URLS.fall.postals : MAP_URLS.fall.blank;
+  const currentSeason = mapSettings.mapSeason === "snow" ? "snow" : "fall";
+  const seasonUrls = MAP_URLS[currentSeason] || MAP_URLS.fall;
+  const mapImgUrl = showPostals ? seasonUrls.postals : seasonUrls.blank;
 
   // Resolve human-readable server name
   useEffect(() => {
@@ -67,7 +82,7 @@ export default function MapPage() {
       .catch(() => {});
   }, [serverId, paramName]);
 
-  // Fetch real units for this server if an API is connected with 10s live interval
+  // Fetch real units for this server with 3.5s real-time live interval
   useEffect(() => {
     if (!serverId) return;
     setLoadingUnits(true);
@@ -78,13 +93,16 @@ export default function MapPage() {
           if (data?.players) {
             setActiveUnits(data.players);
           }
+          if (data?.mapSettings) {
+            setMapSettings((prev) => ({ ...prev, ...data.mapSettings }));
+          }
         })
         .catch(() => {})
         .finally(() => setLoadingUnits(false));
     };
 
     fetchPatrol();
-    const interval = setInterval(fetchPatrol, 10000);
+    const interval = setInterval(fetchPatrol, 3500);
     return () => clearInterval(interval);
   }, [serverId]);
 
@@ -139,9 +157,35 @@ export default function MapPage() {
 
         {/* Right Actions */}
         <div className="tactical-glass-hud__actions">
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.35rem",
+              fontSize: "0.72rem",
+              fontWeight: 700,
+              color: "#4ade80",
+              background: "rgba(74, 222, 128, 0.12)",
+              padding: "0.22rem 0.55rem",
+              borderRadius: "999px",
+              border: "1px solid rgba(74, 222, 128, 0.25)",
+            }}
+          >
+            <span
+              style={{
+                width: "7px",
+                height: "7px",
+                borderRadius: "50%",
+                background: "#4ade80",
+                boxShadow: "0 0 6px #4ade80",
+              }}
+            />
+            LIVE (3s)
+          </div>
+
           {serverId && (
             <Link
-              to={`/dashboard?server=${encodeURIComponent(serverId)}${serverName ? `&name=${encodeURIComponent(serverName)}` : ""}`}
+              to={`/dashboard?server=${encodeURIComponent(serverId)}${serverName ? `&name=${encodeURIComponent(serverName)}` : ""}&tab=overview`}
               className="btn btn--ghost btn--small"
             >
               <IconDashboard /> Dashboard
@@ -172,7 +216,7 @@ export default function MapPage() {
             transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
           }}
         >
-          {/* Real ER:LC Fall Map Image */}
+          {/* Map Image */}
           <img
             src={mapImgUrl}
             alt="Liberty County Map"
@@ -183,32 +227,75 @@ export default function MapPage() {
               if (!e.currentTarget.dataset.fallback) {
                 e.currentTarget.dataset.fallback = "true";
                 e.currentTarget.src = showPostals
-                  ? MAP_URLS.fall.remotePostals
-                  : MAP_URLS.fall.remoteBlank;
+                  ? seasonUrls.remotePostals
+                  : seasonUrls.remoteBlank;
               }
             }}
           />
 
-          {/* Real Active Patrol Units */}
-          {activeUnits.map((unit) => (
-            <div
-              key={unit.id || unit.name}
-              className={`tactical-blip tactical-blip--unit${selectedUnit?.id === unit.id ? " is-selected" : ""}`}
-              style={{
-                left: `${unit.x || 0}px`,
-                top: `${unit.y || 0}px`,
-                "--unit-color": unit.color || "#3b82f6",
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedUnit(unit);
-              }}
-            >
-              <div className="tactical-blip__pulse" />
-              <div className="tactical-blip__dot" />
-              <div className="tactical-blip__label">{unit.callsign || unit.name}</div>
-            </div>
-          ))}
+          {/* Real Active Patrol Units with Roblox Headshots */}
+          {activeUnits.map((unit) => {
+            const showAvatar = mapSettings.showAvatarsOnBlips !== false && Boolean(unit.robloxAvatar);
+            const labelText = mapSettings.showCallsigns !== false ? (unit.callsign || unit.name) : unit.name;
+
+            return (
+              <div
+                key={unit.id || unit.name}
+                className={`tactical-blip tactical-blip--unit${selectedUnit?.id === unit.id ? " is-selected" : ""}`}
+                style={{
+                  left: `${unit.x || 0}px`,
+                  top: `${unit.y || 0}px`,
+                  "--unit-color": unit.color || "#3b82f6",
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedUnit(unit);
+                }}
+              >
+                <div className="tactical-blip__pulse" />
+                <div
+                  className="tactical-blip__dot"
+                  style={{
+                    width: showAvatar ? "28px" : "14px",
+                    height: showAvatar ? "28px" : "14px",
+                    borderRadius: "50%",
+                    overflow: "hidden",
+                    border: `2px solid ${unit.color || "#3b82f6"}`,
+                    background: "#0c0e14",
+                    display: "grid",
+                    placeItems: "center",
+                    boxShadow: `0 0 10px ${unit.color || "#3b82f6"}`,
+                    transform: "translate(-50%, -50%)",
+                  }}
+                >
+                  {showAvatar ? (
+                    <img
+                      src={unit.robloxAvatar}
+                      alt=""
+                      referrerPolicy="no-referrer"
+                      style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  ) : null}
+                </div>
+                <div className="tactical-blip__label">
+                  {labelText}
+                  {mapSettings.showPostalNumbers !== false && unit.postal && (
+                    <span style={{ opacity: 0.85, marginLeft: "0.25rem", color: "var(--blue-300)" }}>
+                      #{unit.postal}
+                    </span>
+                  )}
+                  {mapSettings.showWantedStars !== false && unit.wantedStars > 0 && (
+                    <span style={{ color: "#ef4444", marginLeft: "0.25rem" }}>
+                      {"★".repeat(unit.wantedStars)}
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         {/* Selected Unit Tooltip Popover */}
@@ -216,12 +303,44 @@ export default function MapPage() {
           <div
             className="tactical-unit-card"
             style={{
-              left: Math.min(window.innerWidth - 300, 20),
+              left: Math.min(window.innerWidth - 320, 20),
               bottom: 80,
+              maxWidth: "300px",
             }}
           >
             <div className="tactical-unit-card__header">
-              <strong>{selectedUnit.callsign || selectedUnit.name}</strong>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                {selectedUnit.robloxAvatar && (
+                  <img
+                    src={selectedUnit.robloxAvatar}
+                    alt={selectedUnit.robloxUsername || selectedUnit.name}
+                    referrerPolicy="no-referrer"
+                    style={{
+                      width: "38px",
+                      height: "38px",
+                      borderRadius: "50%",
+                      border: `2px solid ${selectedUnit.color || "var(--blue-400)"}`,
+                      background: "#161922",
+                      objectFit: "cover",
+                      flexShrink: 0,
+                    }}
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                )}
+                <div>
+                  <strong style={{ display: "block", fontSize: "0.95rem", color: "#fff" }}>
+                    {selectedUnit.callsign || selectedUnit.name}
+                  </strong>
+                  {selectedUnit.callsign && selectedUnit.name && (
+                    <span style={{ fontSize: "0.78rem", color: "var(--text-soft)" }}>
+                      {selectedUnit.name}
+                    </span>
+                  )}
+                </div>
+              </div>
+
               <button
                 type="button"
                 className="tactical-unit-card__close"
@@ -230,20 +349,57 @@ export default function MapPage() {
                 <IconClose />
               </button>
             </div>
-            {selectedUnit.name && selectedUnit.callsign && (
-              <p style={{ margin: "0.2rem 0", fontSize: "0.8rem", color: "#fff" }}>{selectedUnit.name}</p>
-            )}
-            {selectedUnit.team && <p className="tactical-unit-card__name">{selectedUnit.team}</p>}
-            {selectedUnit.postal && (
-              <p style={{ margin: "0.3rem 0 0", fontSize: "0.78rem", color: "var(--text-soft)" }}>
-                Postal: <strong style={{ color: "var(--blue-300)" }}>#{selectedUnit.postal}</strong> {selectedUnit.street || ""}
-              </p>
-            )}
-            {selectedUnit.wantedStars > 0 && (
-              <span style={{ color: "#ef4444", fontSize: "0.85rem", marginTop: "0.2rem", display: "inline-block" }}>
-                {"★".repeat(selectedUnit.wantedStars)} Wanted
-              </span>
-            )}
+
+            <div style={{ marginTop: "0.6rem" }}>
+              {selectedUnit.team && (
+                <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.3rem" }}>
+                  <span
+                    style={{
+                      fontSize: "0.72rem",
+                      fontWeight: 700,
+                      padding: "0.15rem 0.5rem",
+                      borderRadius: "999px",
+                      background: "rgba(255, 255, 255, 0.08)",
+                      color: selectedUnit.color || "#fff",
+                      border: `1px solid ${selectedUnit.color || "rgba(255, 255, 255, 0.2)"}`,
+                    }}
+                  >
+                    {selectedUnit.team}
+                  </span>
+                  {selectedUnit.wantedStars > 0 && (
+                    <span style={{ color: "#ef4444", fontSize: "0.8rem", fontWeight: 700 }}>
+                      {"★".repeat(selectedUnit.wantedStars)} Wanted
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {selectedUnit.postal && (
+                <p style={{ margin: "0.25rem 0", fontSize: "0.8rem", color: "var(--text-soft)" }}>
+                  Location: <strong style={{ color: "var(--blue-300)" }}>#{selectedUnit.postal}</strong> {selectedUnit.street || ""}
+                </p>
+              )}
+
+              {selectedUnit.robloxProfileUrl && (
+                <a
+                  href={selectedUnit.robloxProfileUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.25rem",
+                    color: "var(--blue-400)",
+                    fontSize: "0.78rem",
+                    fontWeight: 600,
+                    textDecoration: "none",
+                    marginTop: "0.4rem",
+                  }}
+                >
+                  View Roblox Profile ↗
+                </a>
+              )}
+            </div>
           </div>
         )}
 
@@ -303,19 +459,57 @@ export default function MapPage() {
                   className={`tactical-drawer__item${selectedUnit?.id === u.id ? " is-active" : ""}`}
                   onClick={() => setSelectedUnit(u)}
                 >
-                  <div
-                    className="tactical-drawer__indicator"
-                    style={{ background: u.color || "#3b82f6" }}
-                  />
+                  {u.robloxAvatar ? (
+                    <img
+                      src={u.robloxAvatar}
+                      alt={u.name}
+                      referrerPolicy="no-referrer"
+                      style={{
+                        width: "32px",
+                        height: "32px",
+                        borderRadius: "50%",
+                        border: `1.5px solid ${u.color || "#3b82f6"}`,
+                        background: "#161922",
+                        objectFit: "cover",
+                        flexShrink: 0,
+                      }}
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  ) : (
+                    <div
+                      className="tactical-drawer__indicator"
+                      style={{ background: u.color || "#3b82f6" }}
+                    />
+                  )}
                   <div className="tactical-drawer__info">
                     <div className="tactical-drawer__row">
                       <strong>{u.callsign || u.name}</strong>
-                      <span className="tactical-drawer__status">{u.team || "Active"}</span>
+                      <span className="tactical-drawer__status" style={{ color: u.color || "inherit" }}>
+                        {u.team || "Active"}
+                      </span>
                     </div>
+                    {u.callsign && u.name && (
+                      <div style={{ fontSize: "0.75rem", color: "#fff", opacity: 0.85 }}>
+                        {u.name}
+                      </div>
+                    )}
                     {u.postal && (
-                      <div style={{ fontSize: "0.75rem", color: "var(--text-soft)", marginTop: "0.15rem" }}>
+                      <div style={{ fontSize: "0.72rem", color: "var(--text-soft)", marginTop: "0.1rem" }}>
                         #{u.postal} {u.street || ""}
                       </div>
+                    )}
+                    {u.robloxProfileUrl && (
+                      <a
+                        href={u.robloxProfileUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ fontSize: "0.7rem", color: "var(--blue-400)", textDecoration: "none" }}
+                      >
+                        Profile ↗
+                      </a>
                     )}
                   </div>
                 </div>

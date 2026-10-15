@@ -42,6 +42,20 @@ export default function Dashboard() {
   const [commandFeedback, setCommandFeedback] = useState(null);
   const [activeLogTab, setActiveLogTab] = useState("players");
   const [showKeyText, setShowKeyText] = useState(false);
+  const [autoSync, setAutoSync] = useState(true);
+
+  // Map Customization state
+  const [mapSettings, setMapSettings] = useState({
+    civilianVisibility: "all",
+    leoVisibility: "all",
+    showAvatarsOnBlips: true,
+    showCallsigns: true,
+    showPostalNumbers: true,
+    showWantedStars: true,
+    mapSeason: "fall",
+  });
+  const [savingMapSettings, setSavingMapSettings] = useState(false);
+  const [mapSettingsNotice, setMapSettingsNotice] = useState("");
 
   useEffect(() => {
     if (!serverId) {
@@ -113,8 +127,50 @@ export default function Dashboard() {
   useEffect(() => {
     if (activeNav === "erlc" && serverId) {
       fetchErlcStatus();
+      if (autoSync) {
+        const interval = setInterval(() => {
+          fetchErlcStatus();
+        }, 3500);
+        return () => clearInterval(interval);
+      }
     }
-  }, [activeNav, serverId]);
+  }, [activeNav, serverId, autoSync]);
+
+  useEffect(() => {
+    if (serverId && (activeNav === "map-settings" || activeNav === "erlc")) {
+      fetch(`/api/servers/map-settings?serverId=${encodeURIComponent(serverId)}`, { credentials: "same-origin" })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.settings) setMapSettings(data.settings);
+        })
+        .catch(() => {});
+    }
+  }, [serverId, activeNav]);
+
+  const handleSaveMapSettings = async (e) => {
+    e.preventDefault();
+    if (!serverId) return;
+    setSavingMapSettings(true);
+    setMapSettingsNotice("");
+    try {
+      const res = await fetch("/api/servers/map-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ serverId, settings: mapSettings }),
+      });
+      if (res.ok) {
+        setMapSettingsNotice("Map customization rules saved!");
+        setTimeout(() => setMapSettingsNotice(""), 3500);
+      } else {
+        setMapSettingsNotice("Failed to save map customization.");
+      }
+    } catch {
+      setMapSettingsNotice("Network error saving map settings.");
+    } finally {
+      setSavingMapSettings(false);
+    }
+  };
 
   const handleSaveKey = async (e) => {
     e.preventDefault();
@@ -328,6 +384,15 @@ export default function Dashboard() {
 
           <button
             type="button"
+            className={`dash-sidebar__item${activeNav === "map-settings" ? " is-active" : ""}`}
+            onClick={() => setActiveNav("map-settings")}
+          >
+            <IconMap />
+            <span>Map Customization</span>
+          </button>
+
+          <button
+            type="button"
             className={`dash-sidebar__item${activeNav === "erlc" ? " is-active" : ""}`}
             onClick={() => setActiveNav("erlc")}
           >
@@ -362,13 +427,31 @@ export default function Dashboard() {
                   Real-time sync with Police Roleplay Community Private Server API (v2)
                 </p>
               </div>
-              <div style={{ display: "flex", gap: "0.5rem" }}>
+              <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                <button
+                  type="button"
+                  className={`btn btn--small ${autoSync ? "btn--primary" : "btn--ghost"}`}
+                  onClick={() => setAutoSync((v) => !v)}
+                  style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", height: "32px", fontSize: "0.78rem" }}
+                  title="Toggle live 3.5s real-time sync"
+                >
+                  <span
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "50%",
+                      background: autoSync ? "#4ade80" : "#94a3b8",
+                      boxShadow: autoSync ? "0 0 8px #4ade80" : "none",
+                    }}
+                  />
+                  {autoSync ? "Live Streaming (3s)" : "Stream Paused"}
+                </button>
                 <button
                   type="button"
                   className="btn btn--ghost btn--small"
                   onClick={fetchErlcStatus}
                   disabled={erlcLoading}
-                  style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}
+                  style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", height: "32px" }}
                 >
                   <span style={{ display: "inline-block", transform: erlcLoading ? "rotate(180deg)" : "none", transition: "transform 0.4s ease" }}>⟳</span>
                   {erlcLoading ? "Refreshing…" : "Refresh"}
@@ -762,7 +845,10 @@ export default function Dashboard() {
                             <tbody>
                               {erlcData.Players.map((p, idx) => {
                                 const parts = String(p.Player || "").split(":");
-                                const username = parts[0] || "Unknown";
+                                const username = p.robloxUsername || parts[0] || "Unknown";
+                                const robloxId = p.robloxId || parts[1] || "";
+                                const avatarUrl = p.robloxAvatar || (robloxId ? `https://www.roblox.com/headshot-thumbnail/image?userId=${robloxId}&width=150&height=150&format=png` : "");
+                                const profileUrl = p.robloxProfileUrl || (robloxId ? `https://www.roblox.com/users/${robloxId}/profile` : "");
                                 const team = p.Team || "Civilian";
                                 const isLeo = team.toLowerCase().includes("police") || team.toLowerCase().includes("sheriff");
                                 const isFire = team.toLowerCase().includes("fire") || team.toLowerCase().includes("ems");
@@ -770,13 +856,55 @@ export default function Dashboard() {
 
                                 return (
                                   <tr key={idx} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.04)" }}>
-                                    <td style={{ padding: "0.65rem 0.8rem", fontWeight: 600, color: "#fff" }}>
-                                      {username}
-                                      {p.WantedStars > 0 && (
-                                        <span style={{ color: "#ef4444", marginLeft: "0.4rem" }}>
-                                          {"★".repeat(p.WantedStars)}
-                                        </span>
-                                      )}
+                                    <td style={{ padding: "0.65rem 0.8rem", color: "#fff" }}>
+                                      <div style={{ display: "flex", alignItems: "center", gap: "0.65rem" }}>
+                                        {avatarUrl ? (
+                                          <img
+                                            src={avatarUrl}
+                                            alt={username}
+                                            referrerPolicy="no-referrer"
+                                            style={{
+                                              width: "36px",
+                                              height: "36px",
+                                              borderRadius: "50%",
+                                              border: "1.5px solid rgba(47, 107, 255, 0.4)",
+                                              background: "#161922",
+                                              objectFit: "cover",
+                                              flexShrink: 0,
+                                            }}
+                                            onError={(e) => {
+                                              e.currentTarget.style.display = "none";
+                                            }}
+                                          />
+                                        ) : null}
+                                        <div>
+                                          <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", fontWeight: 600 }}>
+                                            <span>{username}</span>
+                                            {p.WantedStars > 0 && (
+                                              <span style={{ color: "#ef4444", fontSize: "0.75rem" }}>
+                                                {"★".repeat(p.WantedStars)}
+                                              </span>
+                                            )}
+                                          </div>
+                                          {profileUrl && (
+                                            <a
+                                              href={profileUrl}
+                                              target="_blank"
+                                              rel="noreferrer"
+                                              style={{
+                                                fontSize: "0.72rem",
+                                                color: "var(--blue-400)",
+                                                textDecoration: "none",
+                                                display: "inline-flex",
+                                                alignItems: "center",
+                                                gap: "0.2rem",
+                                              }}
+                                            >
+                                              Roblox Profile ↗
+                                            </a>
+                                          )}
+                                        </div>
+                                      </div>
                                     </td>
                                     <td style={{ padding: "0.65rem 0.8rem" }}>
                                       <span
@@ -1025,6 +1153,192 @@ export default function Dashboard() {
                 apidocs.erlc.gg →
               </a>
             </div>
+          </div>
+        )}
+
+        {/* Map Customization View */}
+        {activeNav === "map-settings" && (
+          <div className="dash-view">
+            <div className="dash-view__header">
+              <h2 className="dash-view__title">Map Customization & Visibility</h2>
+              <p className="dash-view__subtitle">
+                Configure who can see who on the tactical map, blip styles, and display options.
+              </p>
+            </div>
+
+            {mapSettingsNotice && (
+              <div
+                style={{
+                  padding: "0.75rem 1rem",
+                  background: "rgba(47, 107, 255, 0.15)",
+                  border: "1px solid rgba(47, 107, 255, 0.4)",
+                  borderRadius: "8px",
+                  color: "var(--blue-300)",
+                  marginBottom: "1.25rem",
+                  fontWeight: 600,
+                  fontSize: "0.85rem",
+                }}
+              >
+                ✓ {mapSettingsNotice}
+              </div>
+            )}
+
+            <form onSubmit={handleSaveMapSettings}>
+              {/* Visibility Rules Card */}
+              <div className="dash-card" style={{ marginBottom: "1.25rem" }}>
+                <h3 className="dash-card__title" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <IconShield style={{ color: "var(--blue-400)", width: "18px", height: "18px" }} />
+                  Visibility Rules ("Who Can See Who")
+                </h3>
+                <p className="dash-card__desc" style={{ marginBottom: "1.25rem" }}>
+                  Control which units and civilian blips appear on the live tactical map.
+                </p>
+
+                {/* Civilian Visibility */}
+                <div style={{ marginBottom: "1.25rem" }}>
+                  <label style={{ display: "block", fontSize: "0.9rem", fontWeight: 700, color: "#fff", marginBottom: "0.35rem" }}>
+                    Civilian Visibility on Map
+                  </label>
+                  <select
+                    className="modal-input modal-input--blue-focus"
+                    value={mapSettings.civilianVisibility || "all"}
+                    onChange={(e) => setMapSettings((prev) => ({ ...prev, civilianVisibility: e.target.value }))}
+                    style={{ maxWidth: "420px", height: "40px" }}
+                  >
+                    <option value="all">Show All Civilians on Map</option>
+                    <option value="wanted_only">Only Show Civilians with Wanted Stars (Tactical LE Mode)</option>
+                    <option value="hide_all">Hide All Civilians (Emergency Teams Only)</option>
+                  </select>
+                  <span style={{ display: "block", fontSize: "0.78rem", color: "var(--text-soft)", marginTop: "0.3rem" }}>
+                    Controls whether non-emergency civilian players appear as map blips.
+                  </span>
+                </div>
+
+                {/* LEO & Emergency Visibility */}
+                <div style={{ marginBottom: "0.5rem" }}>
+                  <label style={{ display: "block", fontSize: "0.9rem", fontWeight: 700, color: "#fff", marginBottom: "0.35rem" }}>
+                    Law Enforcement Visibility
+                  </label>
+                  <select
+                    className="modal-input modal-input--blue-focus"
+                    value={mapSettings.leoVisibility || "all"}
+                    onChange={(e) => setMapSettings((prev) => ({ ...prev, leoVisibility: e.target.value }))}
+                    style={{ maxWidth: "420px", height: "40px" }}
+                  >
+                    <option value="all">Visible to Everyone (All Players & Dispatchers)</option>
+                    <option value="leo_only">Stealth Mode (Only Emergency Teams See Patrol Units)</option>
+                  </select>
+                  <span style={{ display: "block", fontSize: "0.78rem", color: "var(--text-soft)", marginTop: "0.3rem" }}>
+                    Restrict officer locations so civilians cannot track police/sheriff movements.
+                  </span>
+                </div>
+              </div>
+
+              {/* Blip Display & Style Card */}
+              <div className="dash-card" style={{ marginBottom: "1.25rem" }}>
+                <h3 className="dash-card__title" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <IconMap style={{ color: "var(--blue-400)", width: "18px", height: "18px" }} />
+                  Blip & Information Display
+                </h3>
+                <p className="dash-card__desc" style={{ marginBottom: "1.25rem" }}>
+                  Choose what details appear on each unit's live marker pin on the tactical map.
+                </p>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                  {/* Show Avatars */}
+                  <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}>
+                    <div>
+                      <strong style={{ display: "block", color: "#fff", fontSize: "0.92rem" }}>Show Roblox Profile Headshots on Map Blips</strong>
+                      <span style={{ fontSize: "0.8rem", color: "var(--text-soft)" }}>Display player's live Roblox avatar icon inside the map marker blip.</span>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={mapSettings.showAvatarsOnBlips !== false}
+                      onChange={(e) => setMapSettings((prev) => ({ ...prev, showAvatarsOnBlips: e.target.checked }))}
+                      style={{ width: "20px", height: "20px", accentColor: "var(--blue-500)" }}
+                    />
+                  </label>
+
+                  {/* Show Callsigns */}
+                  <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}>
+                    <div>
+                      <strong style={{ display: "block", color: "#fff", fontSize: "0.92rem" }}>Show Callsigns on Blip Labels</strong>
+                      <span style={{ fontSize: "0.8rem", color: "var(--text-soft)" }}>Show unit callsigns (e.g. 1A-12) below blips instead of full usernames.</span>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={mapSettings.showCallsigns !== false}
+                      onChange={(e) => setMapSettings((prev) => ({ ...prev, showCallsigns: e.target.checked }))}
+                      style={{ width: "20px", height: "20px", accentColor: "var(--blue-500)" }}
+                    />
+                  </label>
+
+                  {/* Show Postal Numbers */}
+                  <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}>
+                    <div>
+                      <strong style={{ display: "block", color: "#fff", fontSize: "0.92rem" }}>Show Postal Code Badges</strong>
+                      <span style={{ fontSize: "0.8rem", color: "var(--text-soft)" }}>Display the in-game postal code directly next to each unit.</span>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={mapSettings.showPostalNumbers !== false}
+                      onChange={(e) => setMapSettings((prev) => ({ ...prev, showPostalNumbers: e.target.checked }))}
+                      style={{ width: "20px", height: "20px", accentColor: "var(--blue-500)" }}
+                    />
+                  </label>
+
+                  {/* Show Wanted Stars */}
+                  <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}>
+                    <div>
+                      <strong style={{ display: "block", color: "#fff", fontSize: "0.92rem" }}>Show Wanted Stars on Suspects</strong>
+                      <span style={{ fontSize: "0.8rem", color: "var(--text-soft)" }}>Display red stars over civilian blips with an active wanted level.</span>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={mapSettings.showWantedStars !== false}
+                      onChange={(e) => setMapSettings((prev) => ({ ...prev, showWantedStars: e.target.checked }))}
+                      style={{ width: "20px", height: "20px", accentColor: "var(--blue-500)" }}
+                    />
+                  </label>
+                </div>
+              </div>
+
+              {/* Map Theme / Season Card */}
+              <div className="dash-card" style={{ marginBottom: "1.25rem" }}>
+                <h3 className="dash-card__title">Map Theme & Season</h3>
+                <p className="dash-card__desc" style={{ marginBottom: "1rem" }}>
+                  Select the default official map style used by your community.
+                </p>
+
+                <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+                  {[
+                    { id: "fall", name: "Fall / Autumn", desc: "Official Liberty County Autumn Map" },
+                    { id: "snow", name: "Winter / Snow", desc: "Official Liberty County Winter Map" },
+                  ].map((theme) => (
+                    <div
+                      key={theme.id}
+                      onClick={() => setMapSettings((prev) => ({ ...prev, mapSeason: theme.id }))}
+                      style={{
+                        flex: 1,
+                        minWidth: "200px",
+                        padding: "1rem",
+                        borderRadius: "10px",
+                        cursor: "pointer",
+                        background: mapSettings.mapSeason === theme.id ? "rgba(47, 107, 255, 0.15)" : "rgba(255, 255, 255, 0.03)",
+                        border: `1.5px solid ${mapSettings.mapSeason === theme.id ? "var(--blue-500)" : "rgba(255, 255, 255, 0.08)"}`,
+                      }}
+                    >
+                      <strong style={{ display: "block", color: "#fff", fontSize: "0.95rem" }}>{theme.name}</strong>
+                      <span style={{ fontSize: "0.8rem", color: "var(--text-soft)", marginTop: "0.2rem", display: "block" }}>{theme.desc}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <button type="submit" className="btn btn--primary" disabled={savingMapSettings}>
+                {savingMapSettings ? "Saving Settings…" : "Save Map Customization"}
+              </button>
+            </form>
           </div>
         )}
 
