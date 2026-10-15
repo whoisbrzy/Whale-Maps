@@ -16,36 +16,41 @@ import {
 
 const LOCAL_STORAGE_KEY = "waylo_servers";
 
-function getStoredServers(userId) {
+function getStoredServers() {
+  const map = new Map();
   try {
-    const keys = [
-      userId ? `${LOCAL_STORAGE_KEY}_${userId}` : null,
-      LOCAL_STORAGE_KEY,
-    ].filter(Boolean);
-
-    for (const key of keys) {
-      const raw = localStorage.getItem(key);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.filter((s) => s && s.id && s.name);
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith("waylo_servers")) {
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          try {
+            const list = JSON.parse(raw);
+            if (Array.isArray(list)) {
+              for (const s of list) {
+                if (s && s.id && s.name) map.set(s.id, s);
+              }
+            }
+          } catch {
+            /* ignore */
+          }
         }
       }
     }
   } catch {
     /* ignore */
   }
-  return [];
+  return Array.from(map.values());
 }
 
 function saveStoredServers(list, userId) {
   try {
     const valid = (list || []).filter((s) => s && s.id && s.name);
     const jsonStr = JSON.stringify(valid);
+    localStorage.setItem(LOCAL_STORAGE_KEY, jsonStr);
     if (userId) {
       localStorage.setItem(`${LOCAL_STORAGE_KEY}_${userId}`, jsonStr);
     }
-    localStorage.setItem(LOCAL_STORAGE_KEY, jsonStr);
   } catch {
     /* ignore */
   }
@@ -53,7 +58,7 @@ function saveStoredServers(list, userId) {
 
 export default function Servers() {
   const { user, ready } = useAuth();
-  const [servers, setServers] = useState(() => getStoredServers(user?.id));
+  const [servers, setServers] = useState(getStoredServers);
   const [discordGuilds, setDiscordGuilds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState("grid");
@@ -69,7 +74,7 @@ export default function Servers() {
 
   // Load servers from localStorage cache + API merge
   const fetchServers = async () => {
-    const local = getStoredServers(user?.id);
+    const local = getStoredServers();
     if (local.length > 0) {
       setServers(local);
     }
@@ -107,7 +112,7 @@ export default function Servers() {
     fetch("/api/discord/guilds", { credentials: "same-origin" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (data?.guilds) {
+        if (data?.guilds && data.guilds.length > 0) {
           setDiscordGuilds(data.guilds);
         }
       })
@@ -123,19 +128,22 @@ export default function Servers() {
 
   const handleCreateServer = async (e) => {
     e.preventDefault();
-    const cleanName = serverName.trim();
-    if (!cleanName) return;
+    const selectedGuild = discordGuilds.find((g) => g.id === selectedDiscordId);
+    const cleanName = (serverName.trim() || selectedGuild?.name || selectedDiscordId.trim() || "").trim();
+    if (!cleanName) {
+      setErrorMsg("Please enter a server name or select a Discord server.");
+      return;
+    }
     setSubmitting(true);
     setErrorMsg("");
 
-    const selectedGuild = discordGuilds.find((g) => g.id === selectedDiscordId);
     const tempId = `srv-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 
     const newServer = {
       id: tempId,
       name: cleanName,
       discordServerId: selectedDiscordId || "",
-      discordServerName: selectedGuild ? selectedGuild.name : "",
+      discordServerName: selectedGuild ? selectedGuild.name : (cleanName || ""),
       erlcApiKey: erlcApiKey.trim(),
       role: "owner",
       players: 0,
@@ -187,7 +195,7 @@ export default function Servers() {
   const handleGuildSelect = (guildId) => {
     setSelectedDiscordId(guildId);
     const g = discordGuilds.find((item) => item.id === guildId);
-    if (g && !serverName.trim()) {
+    if (g) {
       setServerName(g.name);
     }
   };
@@ -406,7 +414,6 @@ export default function Servers() {
                   placeholder="Give your server a unique name"
                   value={serverName}
                   onChange={(e) => setServerName(e.target.value)}
-                  required
                 />
               </label>
 
@@ -434,13 +441,32 @@ export default function Servers() {
                     ))}
                   </select>
                 ) : (
-                  <input
-                    type="text"
-                    className="modal-input modal-input--blue-focus"
-                    placeholder="Search or enter discord server"
-                    value={selectedDiscordId}
-                    onChange={(e) => setSelectedDiscordId(e.target.value)}
-                  />
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+                    <input
+                      type="text"
+                      className="modal-input modal-input--blue-focus"
+                      placeholder="Search or enter discord server"
+                      value={selectedDiscordId}
+                      onChange={(e) => setSelectedDiscordId(e.target.value)}
+                    />
+                    <div style={{ display: "flex", gap: "0.6rem", alignItems: "center" }}>
+                      <a
+                        href="/auth/login"
+                        className="btn btn--primary btn--small"
+                        style={{ fontSize: "0.78rem", height: "30px", padding: "0 0.8rem" }}
+                      >
+                        <Discord /> Connect & Pull Discord Servers
+                      </a>
+                      <button
+                        type="button"
+                        className="btn btn--ghost btn--small"
+                        style={{ fontSize: "0.78rem", height: "30px" }}
+                        onClick={fetchGuilds}
+                      >
+                        Refresh
+                      </button>
+                    </div>
+                  </div>
                 )}
               </label>
 
@@ -469,7 +495,7 @@ export default function Servers() {
                 <button
                   type="submit"
                   className="btn btn--primary btn--small"
-                  disabled={submitting || !serverName.trim()}
+                  disabled={submitting}
                 >
                   {submitting ? "Saving…" : "Create Server"}
                 </button>
