@@ -9,5 +9,7 @@ export const SITE = {
   legalUpdated: "October 14, 2026",
 };
 
-/* Where the desktop app installer can be downloaded (shown on the web /map page). */
-export const DESKTOP_DOWNLOAD_URL = "https://github.com/whoisbrzy/Whale-Maps/releases";
+/* Direct link to the Windows installer, used by the button on the web /map page. GitHub serves the
+   newest release's asset at /releases/latest/download/<file name>, so each release must contain a
+   file with exactly this name (set electron-builder's nsis "artifactName" to "Waylo-Setup.exe"). */
+export const DESKTOP_DOWNLOAD_URL = "https://github.com/whoisbrzy/Whale-Maps/releases/latest/download/Waylo-Setup.exe";

@@ -1839,8 +1839,9 @@ html[data-waylo-desktop="1"] .tactical-routes {
   max-width: 34rem;
   text-align: center;
 }
-.download-hero img {
-  height: 64px;
+.download-hero .logo-mark {
+  width: 80px;
+  height: 80px;
 }
 .download-hero__title {
   font-size: var(--fs-h1);

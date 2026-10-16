@@ -38,7 +38,7 @@ function DownloadDesktop() {
           speed - no browser limits, nothing in between. Log in with Discord, verify
           with Dock, and your servers are right there.
         </p>
-        <a className="btn btn--primary" href={DESKTOP_DOWNLOAD_URL}>
+        <a className="btn btn--primary" href={DESKTOP_DOWNLOAD_URL} download="Waylo-Setup.exe">
           Download the desktop app
         </a>
       </div>
