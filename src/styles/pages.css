@@ -1757,3 +1757,103 @@
 .tactical-route-dot--draft {
   fill: #fff;
 }
+
+/* ==========================================================================
+   Desktop app: custom window controls + offsets
+   ========================================================================== */
+.wtitlebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 34px;
+  padding-left: 12px;
+  background: #05070c;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  -webkit-app-region: drag;
+  user-select: none;
+}
+.wtitlebar__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-soft);
+}
+.wtitlebar__title img {
+  height: 15px;
+}
+.wtitlebar__controls {
+  display: flex;
+  height: 100%;
+  -webkit-app-region: no-drag;
+}
+.wtitlebar__controls button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 100%;
+  border: 0;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.wtitlebar__controls button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+}
+.wtitlebar__controls .wtitlebar__close:hover {
+  background: #e81123;
+  color: #fff;
+}
+
+/* Push fixed-position chrome below the titlebar inside the desktop app. */
+html[data-waylo-desktop="1"] body {
+  padding-top: 34px;
+}
+html[data-waylo-desktop="1"] .topbar {
+  top: 34px;
+}
+html[data-waylo-desktop="1"] .tactical-glass-hud {
+  top: calc(1rem + 34px);
+}
+html[data-waylo-desktop="1"] .tactical-routes {
+  top: calc(4.75rem + 34px);
+}
+
+/* Web "download the app" screen for /map */
+.tactical-map--download {
+  display: grid;
+  place-items: center;
+  padding: var(--nav-h) 1.25rem 2rem;
+}
+.download-hero {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-4);
+  max-width: 34rem;
+  text-align: center;
+}
+.download-hero img {
+  height: 64px;
+}
+.download-hero__title {
+  font-size: var(--fs-h1);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  text-wrap: balance;
+}
+.download-hero__lead {
+  color: var(--text-soft);
+  line-height: 1.6;
+  text-wrap: balance;
+}
+.download-hero .btn {
+  margin-top: var(--space-2);
+}

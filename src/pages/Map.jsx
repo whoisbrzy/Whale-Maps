@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { LogoMark, IconDashboard, IconClose } from "../components/Icons.jsx";
+import DesktopTitlebar from "../components/DesktopTitlebar.jsx";
+import { DESKTOP_DOWNLOAD_URL } from "../config.js";
 
 const MAP_URLS = {
   fall: {
@@ -20,8 +22,33 @@ const MAP_URLS = {
    shared by every viewer), responses are ETagged (304 = no body when nothing
    moved) and edge-compressed, and polling pauses in background tabs. */
 
+const isDesktopApp = () => Boolean(window.wayloDesktop?.isDesktop);
+
+/* The live map runs in the desktop app; on the website this page is a download
+   prompt. In the app, tracking goes straight from the user's PC to ER:LC. */
+function DownloadDesktop() {
+  return (
+    <div className="tactical-map tactical-map--download">
+      <DesktopTitlebar />
+      <div className="download-hero">
+        <LogoMark />
+        <h1 className="download-hero__title">The map lives in the Waylo desktop app</h1>
+        <p className="download-hero__lead">
+          Live tracking in the app runs straight from your PC to the ER:LC API at full
+          speed - no browser limits, nothing in between. Log in with Discord, verify
+          with Dock, and your servers are right there.
+        </p>
+        <a className="btn btn--primary" href={DESKTOP_DOWNLOAD_URL}>
+          Download the desktop app
+        </a>
+      </div>
+    </div>
+  );
+}
+
 export default function MapPage() {
   const [params] = useSearchParams();
+  if (!isDesktopApp()) return <DownloadDesktop />;
   const serverId = params.get("server") || "";
   const paramName = params.get("name") || "";
   const [serverName, setServerName] = useState(paramName);
@@ -263,6 +290,7 @@ export default function MapPage() {
 
   return (
     <div className="tactical-map">
+      <DesktopTitlebar />
       {/* Floating Glass Matte HUD (matches hero & navbar design) */}
       <header className="tactical-glass-hud">
         <div className="tactical-glass-hud__brand-wrap">

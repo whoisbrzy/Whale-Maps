@@ -8,3 +8,6 @@ export const SITE = {
   // Shown at the top of the Terms and Privacy pages. Update when the text changes.
   legalUpdated: "October 14, 2026",
 };
+
+/* Where the desktop app installer can be downloaded (shown on the web /map page). */
+export const DESKTOP_DOWNLOAD_URL = "https://github.com/whoisbrzy/Whale-Maps/releases";
